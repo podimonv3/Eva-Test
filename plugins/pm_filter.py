@@ -845,27 +845,35 @@ async def auto_filter(client, msg, spoll=False):
             if not search:
                 return
 
-            # 10. ഡാറ്റാബേസിൽ തിരയുന്നു
-                        # 10. ഡാറ്റാബേസിൽ തിരയുന്നു
+            # 10. ഡാറ്റാബേസിൽ തിരയുന്നു                   
             files, offset, total_results = await get_search_results(search, offset=0, filter=True)
             
-            # 🔍 NEW EXACT MATCH SORTING LOGIC ADDED HERE
+            # 🔍 ADVANCED PRIORITY SORTING FOR FILENAME ENDINGS
             if files:
                 query_lower = search.lower()
                 
-                def sort_priority(file_obj):
-                    file_name_lower = file_obj.file_name.lower()
-                    # 1. സെർച്ച് ചെയ്ത വാക്ക് ഫയലിന്റെ പേരിന്റെ തുടക്കത്തിൽ തന്നെ ഉണ്ടെങ്കിൽ ഒന്നാം മുൻഗണന (0)
-                    if file_name_lower.startswith(query_lower):
-                        return 0
-                    # 2. ഫയലിന്റെ പേരിന്റെ എവിടെയെങ്കിലും കൃത്യമായി ആ വാക്ക് വേർതിരിഞ്ഞു നിൽക്കുന്നുണ്ടെങ്കിൽ രണ്ടാം മുൻഗണന (1)
-                    elif query_lower in file_name_lower:
-                        return 1
-                    # 3. മറ്റുള്ളവയ്ക്ക് കുറഞ്ഞ മുൻഗണന (2)
-                    return 2
+                # ഫയലുകളുടെ പേരിൽ യൂസർ തിരഞ്ഞ വാക്ക് ഉണ്ടെന്ന് ഉറപ്പുവരുത്തുന്നു
+                filtered_files = [f for f in files if query_lower in f.file_name.lower()]
+                
+                if filtered_files:
+                    def sort_priority(file_obj):
+                        file_name_lower = file_obj.file_name.lower()
+                        
+                        # 🥇 മുൻഗണന 1: സിനിമയുടെ പേര് കൃത്യമായി 'bigil' എന്ന് തുടങ്ങുകയോ, അല്ലെങ്കിൽ 'bigil 2019' എന്ന രീതിയിലോ ആണെങ്കിൽ (ഏറ്റവും ഉയർന്ന മുൻഗണന)
+                        if file_name_lower.startswith(query_lower) or f"{query_lower} 2" in file_name_lower or f"{query_lower}.2" in file_name_lower:
+                            return 0
+                        
+                        # 🥈 മുൻഗണന 2: ഫയലിന്റെ പേരിന് നടുവിലാണ് 'bigil' എങ്കിൽ (രണ്ടാം മുൻഗണന)
+                        elif f" {query_lower} " in f" {file_name_lower} " and not file_name_lower.endswith(f"-{query_lower}.mkv") and not file_name_lower.endswith(f"-{query_lower}.mp4"):
+                            return 1
+                            
+                        # 🥉 മുൻഗണന 3: ഫയലിന്റെ ഏറ്റവും അവസാനം ടാഗ് ആയിട്ടാണ് (-BiGiL) വരുന്നതെങ്കിൽ (ഏറ്റവും കുറഞ്ഞ മുൻഗണന)
+                        return 2
 
-                # മുൻഗണനാ ക്രമത്തിൽ ലിസ്റ്റ് സോർട്ട് ചെയ്യുന്നു
-                files = sorted(files, key=sort_priority)
+                    # മുൻഗണനാ ക്രമത്തിൽ ലിസ്റ്റ് സോർട്ട് ചെയ്യുന്നു
+                    files = sorted(filtered_files, key=sort_priority)
+                else:
+                    files = files
 
             if not files:
                 # === CUSTOM CODE: ഗ്രൂപ്പുകളിൽ നിന്നുള്ള കിട്ടാത്ത ഫയലുകൾ മാത്രം സേവ് ചെയ്യുന്നു ===
