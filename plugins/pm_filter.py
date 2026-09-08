@@ -858,8 +858,6 @@ async def auto_filter(client, msg, spoll=False):
                         log_db = clientDB.search_logs
                         current_time = datetime.now()
 
-                        # (നിങ്ങളുടെ പഴയ കോഡിന്റെ ബാക്കി ഭാഗം ഇവിടെ തുടരും...)
-
                         # 24 മണിക്കൂർ കഴിഞ്ഞ പഴയ ലോഗുകൾ നീക്കം ചെയ്യുന്നു
                         time_limit = current_time - timedelta(hours=24)
                         await log_db.delete_many({"timestamp": {"$lt": time_limit}})
@@ -889,75 +887,81 @@ async def auto_filter(client, msg, spoll=False):
                             print(f"Error in search logging: {log_error}")
                 # === CUSTOM CODE END ===
 
-                # സ്പെൽ ചെക്ക് ഓൺ ആണോ ഓഫ് ആണോ എന്ന് നോക്കാതെ നേരിട്ട് ഫങ്ഷൻ വർക്ക് ചെയ്യിക്കുന്നു
+                # സ്പെൽ ചെക്ക് ഫങ്ക്ഷൻ വർക്ക് ചെയ്യിക്കുന്നു
                 return await advantage_spell_chok(client, msg)
-        else:
-            return
-    else:
-    settings = await get_settings(msg.message.chat.id)      
-    message = msg.message.reply_to_message  # msg will be callback query
-    search, files, offset, total_results = spoll
-    pre = 'filep' if settings['file_secure'] else 'file'    
-    
-    btn = []
-    for file in files:
-        display_name = file.file_name
-        # ഫയലിന്റെ തുടക്കത്തിലുള്ള [MS], [ms], [any_tag], @channel ടാഗുകൾ, അനാവശ്യ ചിഹ്നങ്ങൾ എന്നിവ നീക്കം ചെയ്യുന്നു
-        display_name = re.sub(r'^(?:\[[^\]]+\]|\([^)]+\)|@[^\s]+|[\s🎬⭐🌟-_\.]+)+', '', display_name).strip()
-        
-        if not display_name:
-            display_name = file.file_name
             
-        if settings["button"]:
-            # Single Button ഫോർമാറ്റ്
-            btn.append([
-                InlineKeyboardButton(
-                    text=f"{get_size(file.file_size)}►{display_name}", 
-                    callback_data=f'{pre}#{file.file_id}'
-                ),
-            ])
-        else:
-            # Double Button ഫോർമാറ്റ്
-            btn.append([
-                InlineKeyboardButton(
-                    text=f"{display_name}",
-                    callback_data=f'{pre}#{file.file_id}',
-                ),
-                InlineKeyboardButton(
-                    text=f"{get_size(file.file_size)}",
-                    callback_data=f'{pre}#{file.file_id}',
-                ),
-            ])
+            else:
+                # --------------------------------------------------------------------
+                # ഫയലുകൾ ഉണ്ടെങ്കിൽ ബട്ടണുകൾ നിർമ്മിക്കുന്ന പ്രധാന ഭാഗം (Fixed Indentation)
+                # --------------------------------------------------------------------
+                settings = await get_settings(msg.message.chat.id)      
+                message = msg.message.reply_to_message  # msg will be callback query
+                search, files, offset, total_results = spoll
+                pre = 'filep' if settings['file_secure'] else 'file'    
+                
+                btn = []
+                for file in files:
+                    display_name = file.file_name
+                    # ഫയലിന്റെ തുടക്കത്തിലുള്ള [MS], [ms], [any_tag], @channel ടാഗുകൾ നീക്കം ചെയ്യുന്നു
+                    display_name = re.sub(r'^(?:\[[^\]]+\]|\([^)]+\)|@[^\s]+|[\s🎬⭐🌟-_\.]+)+', '', display_name).strip()
+                    
+                    if not display_name:
+                        display_name = file.file_name
+                        
+                    if settings["button"]:
+                        # Single Button ഫോർമാറ്റ്
+                        btn.append([
+                            InlineKeyboardButton(
+                                text=f"{get_size(file.file_size)}►{display_name}", 
+                                callback_data=f'{pre}#{file.file_id}'
+                            ),
+                        ])
+                    else:
+                        # Double Button ഫോർമാറ്റ്
+                        btn.append([
+                            InlineKeyboardButton(
+                                text=f"{display_name}",
+                                callback_data=f'{pre}#{file.file_id}',
+                            ),
+                            InlineKeyboardButton(
+                                text=f"{get_size(file.file_size)}",
+                                callback_data=f'{pre}#{file.file_id}',
+                            ),
+                        ])
 
-    if offset != "":
-        try:
-            offset = int(offset)
-        except ValueError:
-            offset = 0
-    else:
-        offset = 0
-    
-    if offset == 0:
-        btn.append(
-            [InlineKeyboardButton(text="🍃 ഉർവശി തീയറ്റേഴ്‌സ് 🍃", url="https://t.me/+eb__Eg3RS2IyZWQ1")]
-        )
-    else:
-        key = f"{message.chat.id}-{message.id}"
-        BUTTONS[key] = search
-        req = message.from_user.id if message.from_user else 0
-        btn.append(
-            [InlineKeyboardButton(text=f"1/{math.ceil(int(total_results) / 10)}", callback_data="pages"),
-            InlineKeyboardButton(text="Nᴇxᴛ ⤷", callback_data=f"next_{req}_{key}_{offset}")]
-        )
-        
-    # IMDb പൂർണ്ണമായും ഒഴിവാക്കി, നേരിട്ട് സാധാരണ ടെക്സ്റ്റ് ക്യാപ്ഷൻ സെറ്റ് ചെയ്യുന്നു
-    cap = f"<b><i><blockquote>►Film : {search}\n►Rating : {random.choice(RATING)}\n►Genre : {random.choice(GENRES)}</i></blockquote></b>\n<b><i>©𝐓𝐞𝐚𝐦 𝐔𝐫𝐯𝐚𝐬𝐡𝐢 𝐓𝐡𝐞𝐚𝐭𝐞𝐫𝐬™️</i></b>"         
-    
-    # ഫയലുകളുടെ ബട്ടണുകളോടൊപ്പം മെസ്സേജ് ഗ്രൂപ്പിലേക്ക് അയക്കുന്നു
-    fmsg = await message.reply_text(cap, reply_markup=InlineKeyboardMarkup(btn))
-       
-    await asyncio.sleep(300)
-    await fmsg.delete()
+                # 📄 PAGE & OFFSET MANAGEMENT
+                if offset != "":
+                    try:
+                        offset = int(offset)
+                    except ValueError:
+                        offset = 0
+                else:
+                    offset = 0
+                
+                # ആദ്യ പേജ് ആണെങ്കിൽ ഉർവശി തീയറ്റേഴ്‌സ് ബട്ടൺ ആഡ് ചെയ്യുന്നു
+                if offset == 0:
+                    btn.append(
+                        [InlineKeyboardButton(text="🍃 ഉർവശി തീയറ്റേഴ്‌സ് 🍃", url="https://t.me/+eb__Eg3RS2IyZWQ1")]
+                    )
+                else:
+                    key = f"{message.chat.id}-{message.id}"
+                    BUTTONS[key] = search
+                    req = message.from_user.id if message.from_user else 0
+                    btn.append(
+                        [InlineKeyboardButton(text=f"1/{math.ceil(int(total_results) / 10)}", callback_data="pages"),
+                        InlineKeyboardButton(text="Nᴇxᴛ ⤷", callback_data=f"next_{req}_{key}_{offset}")]
+                    )
+                    
+                # 📝 CUSTOM TEXT CAPTION (IMDb ഒഴിവാക്കിയത്)
+                cap = f"<b><i><blockquote>►Film : {search}\n►Rating : {random.choice(RATING)}\n►Genre : {random.choice(GENRES)}</i></blockquote></b>\n<b><i>©𝐓𝐞𝐚𝐦 𝐔𝐫𝐯𝐚𝐬𝐡𝐢 𝐓𝐡𝐞𝐚𝐭𝐞𝐫𝐬™️</i></b>"         
+                
+                # ഫയലുകളുടെ ബട്ടണുകളോടൊപ്പം മെസ്സേജ് ഗ്രൂപ്പിലേക്ക് അയക്കുന്നു
+                fmsg = await message.reply_text(cap, reply_markup=InlineKeyboardMarkup(btn))
+                   
+                # ⏱️ 5 മിനിറ്റിന് ശേഷം (300 സെക്കൻഡ്) മെസ്സേജ് തനിയെ ഡിലീറ്റ് ചെയ്യുന്നു
+                await asyncio.sleep(300)
+                await fmsg.delete()
+
         
 
 
