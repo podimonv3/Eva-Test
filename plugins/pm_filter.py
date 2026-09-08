@@ -119,10 +119,10 @@ async def pm_text(bot: Client, message):
             # ഉദാഹരണത്തിന് ലളിതമായി ഫയലുകൾ കാണിക്കാൻ താഴെ നൽകുന്നു:
             btn = []
             for file in files:
-                btn.append([InlineKeyboardButton(text=f"🎬 {file.file_name}", callback_data=f"files#{file.file_id}")])
+                btn.append([InlineKeyboardButton(text=f"{file.file_name}", callback_data=f"files#{file.file_id}")])
                 
             await message.reply_text(
-                text=f"<b>✨ I found some results for your query: <code>{search_query}</code>\n\nഫയലുകൾ താഴെ നൽകുന്നു:</b>",
+                text=f"<b>✨ I found some results for your query: <code>{search_query}</code></b>",
                 reply_markup=InlineKeyboardMarkup(btn)
             )
 
