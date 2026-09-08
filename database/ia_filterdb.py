@@ -200,7 +200,7 @@ async def get_bad_files(query, file_type=None, filter=False):
 
 
 async def get_search_results(query, file_type=None, max_results=10, offset=0, filter=False):
-    """For given query return (results, next_offset)"""
+    """For given query return (results, next_offset) with exact match priority"""
     query = query.strip()
     if not query:
         raw_pattern = '.'
@@ -215,15 +215,15 @@ async def get_search_results(query, file_type=None, max_results=10, offset=0, fi
         return [], '', 0
 
     if USE_CAPTION_FILTER:
-        filter = {'$or': [{'file_name': regex}, {'caption': regex}]}
+        filter_query = {'$or': [{'file_name': regex}, {'caption': regex}]}
     else:
-        filter = {'file_name': regex}
+        filter_query = {'file_name': regex}
 
     if file_type:
-        filter['file_type'] = file_type
+        filter_query['file_type'] = file_type
 
-    cursor_media = Media.find(filter).sort('$natural', -1)
-    cursor_mediaa = Mediaa.find(filter).sort('$natural', -1)
+    cursor_media = Media.find(filter_query).sort('$natural', -1)
+    cursor_mediaa = Mediaa.find(filter_query).sort('$natural', -1)
 
     if offset < 0:
         offset = 0
@@ -242,6 +242,25 @@ async def get_search_results(query, file_type=None, max_results=10, offset=0, fi
             interleaved_files.append(files_mediaa[index_media2])
             index_media2 += 1
 
+    # 🔍 NEW SORTING LOGIC: ഫയലുകൾ യൂസർക്ക് കാണിക്കുന്നതിന് മുൻപ് അവയുടെ പേര് പരിശോധിക്കുന്നു.
+    # തിരഞ്ഞ വാക്ക് ഫയലിന്റെ തുടക്കത്തിൽ വരുന്ന യഥാർത്ഥ സിനിമകൾക്ക് ഏറ്റവും ഉയർന്ന മുൻഗണന നൽകുന്നു.
+    if interleaved_files:
+        query_lower = query.lower()
+        
+        def sort_by_exact_match(file_obj):
+            file_name_lower = file_obj.file_name.lower()
+            # 1. യൂസർ തിരഞ്ഞ വാക്കിലാണ് സിനിമയുടെ പേര് തുടങ്ങുന്നതെങ്കിൽ ഒന്നാം സ്ഥാനം (0)
+            if file_name_lower.startswith(query_lower):
+                return 0
+            # 2. ഫയലിന്റെ പേരിന്റെ എവിടെയെങ്കിലും ആ വാക്ക് കൃത്യമായി വേർതിരിഞ്ഞു നിൽക്കുന്നുണ്ടെങ്കിൽ രണ്ടാം സ്ഥാനം (1)
+            elif f" {query_lower} " in f" {file_name_lower} " and not file_name_lower.endswith(f"-{query_lower}.mkv") and not file_name_lower.endswith(f"-{query_lower}.mp4"):
+                return 1
+            # 3. പേരിന്റെ അവസാനം ടാഗ് ആയിട്ടാണ് വരുന്നതെങ്കിൽ ഏറ്റവും അവസാന സ്ഥാനം (2)
+            return 2
+
+        interleaved_files = sorted(interleaved_files, key=sort_by_exact_match)
+
+    # യൂസർ ആവശ്യപ്പെട്ട പേജ് അനുസരിച്ചുള്ള റിസൾട്ടുകൾ മുറിച്ചെടുക്കുന്നു (Offset slicing)
     files = interleaved_files[offset:offset + max_results]
     next_offset = offset + len(files)
 
