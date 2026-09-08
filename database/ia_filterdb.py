@@ -8,7 +8,7 @@ from umongo import Instance, Document, fields
 from motor.motor_asyncio import AsyncIOMotorClient
 from marshmallow.exceptions import ValidationError
 from info import DATABASE_URI, DATABASE_URI2, DATABASE_URI3, DATABASE_NAME, COLLECTION_NAME, USE_CAPTION_FILTER
-
+from Script import CUSTOM_TAGS 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -70,11 +70,30 @@ async def check_file(media):
         return okda
         
 async def save_file(media):
-    """Save file in database"""
-
-    # TODO: Find better way to get same file_id for same media to avoid duplicates
+    """Save file in database after cleaning dynamic group tags and brackets () []"""
     file_id, file_ref = unpack_new_file_id(media.file_id)
-    file_name = re.sub(r"(_|\-|\.|\+)", " ", str(media.file_name))
+    
+    raw_name = str(media.file_name)
+    cleaned_name = raw_name
+
+    # ✂️ DYNAMIC TAG CLEANING LOGIC (Script.py-ലെ ലിസ്റ്റ് വെച്ച് ചാനൽ ടാഗുകൾ മാറ്റുന്നു)
+    for tag in CUSTOM_TAGS:
+        tag_pattern = rf'(?:\[{re.escape(tag)}\]|\({re.escape(tag)}\)|@{re.escape(tag)}|[\s\.\-_\+\(\)\[\]]{re.escape(tag)}\b)'
+        cleaned_name = re.sub(tag_pattern, '', cleaned_name, flags=re.IGNORECASE).strip()
+
+    # ✂️ BRACKET & SYMBOL CLEANING LOGIC (ബ്രാക്കറ്റുകളും ചിഹ്നങ്ങളും പൂർണ്ണമായി മാറ്റുന്നു)
+    # അണ്ടർസ്കോർ, ഡാഷ്, ഡോട്ട്, പ്ലസ് എന്നിവയോടൊപ്പം ബ്രാക്കറ്റുകളും () [] മാറ്റി സ്പേസ് ആക്കുന്നു
+    cleaned_name = re.sub(r"(_|\-|\.|\+|\(|\)|\[|\])", " ", cleaned_name)
+    
+    # ഫയലിന്റെ മുന്നിൽ ബാക്കിയാകാൻ സാധ്യതയുള്ള അനാവശ്യ ചിഹ്നങ്ങളും സ്പേസും മാറ്റുന്നു
+    cleaned_name = re.sub(r'^[\s🎬⭐🌟\.\)]+', '', cleaned_name).strip()
+    
+    # 🧼 ഇരട്ട സ്പേസുകൾ (Double Spaces) ഒഴിവാക്കി ഒരൊറ്റ സ്പേസ് മാത്രമാക്കുന്നു
+    file_name = re.sub(r"\s+", " ", cleaned_name).strip()
+    
+    if not file_name:
+        file_name = raw_name
+
     try:
         file = Media(
             file_id=file_id,
@@ -89,24 +108,34 @@ async def save_file(media):
         logger.exception('Error occurred while saving file in database')
         return False, 2
     else:
-        try:
-            await file.commit()
-        except DuplicateKeyError:      
-            logger.warning(
-                f'{getattr(media, "file_name", "NO_FILE")} is already saved in database'
-            )
-
-            return False, 0
+        try: await file.commit()
+        except DuplicateKeyError: return False, 0
         else:
-            logger.info(f'{getattr(media, "file_name", "NO_FILE")} is saved to database')
+            logger.info(f'{file_name} is saved to database')
             return True, 1
 
 async def save_filea(media):
-    """Save file in database"""
-
-    # TODO: Find better way to get same file_id for same media to avoid duplicates
+    """Save file in database after cleaning dynamic group tags and brackets () []"""
     file_id, file_ref = unpack_new_file_id(media.file_id)
-    file_name = re.sub(r"(_|\-|\.|\+)", " ", str(media.file_name))
+    
+    raw_name = str(media.file_name)
+    cleaned_name = raw_name
+
+    # ✂️ DYNAMIC TAG CLEANING LOGIC
+    for tag in CUSTOM_TAGS:
+        tag_pattern = rf'(?:\[{re.escape(tag)}\]|\({re.escape(tag)}\)|@{re.escape(tag)}|[\s\.\-_\+\(\)\[\]]{re.escape(tag)}\b)'
+        cleaned_name = re.sub(tag_pattern, '', cleaned_name, flags=re.IGNORECASE).strip()
+
+    # ✂️ BRACKET & SYMBOL CLEANING LOGIC
+    cleaned_name = re.sub(r"(_|\-|\.|\+|\(|\)|\[|\])", " ", cleaned_name)
+    cleaned_name = re.sub(r'^[\s🎬⭐🌟\.\)]+', '', cleaned_name).strip()
+    
+    # 🧼 ഇരട്ട സ്പേസുകൾ ഒഴിവാക്കുന്നു
+    file_name = re.sub(r"\s+", " ", cleaned_name).strip()
+    
+    if not file_name:
+        file_name = raw_name
+
     try:
         file = Mediaa(
             file_id=file_id,
@@ -121,16 +150,10 @@ async def save_filea(media):
         logger.exception('Error occurred while saving file in database')
         return False, 2
     else:
-        try:
-            await file.commit()
-        except DuplicateKeyError:      
-            logger.warning(
-                f'{getattr(media, "file_name", "NO_FILE")} is already saved in database'
-            )
-
-            return False, 0
+        try: await file.commit()
+        except DuplicateKeyError: return False, 0
         else:
-            logger.info(f'{getattr(media, "file_name", "NO_FILE")} is saved to database')
+            logger.info(f'{file_name} is saved to database')
             return True, 1
             
 
