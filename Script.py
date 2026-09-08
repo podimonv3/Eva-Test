@@ -6,6 +6,14 @@ class script(object):
 
 <b>⚡Powered by ➤ <i><a href=https://t.me/UrvashiTheaters_Main>©𝐓𝐞𝐚𝐦 𝐔𝐫𝐯𝐚𝐬𝐡𝐢 𝐓𝐡𝐞𝐚𝐭𝐞𝐫𝐬™️</a></i></b>"""
 
+    CUSTOM_TAGS = [
+    "1TamilMV",
+    "msp",
+    "ms",
+    "team-ms",
+    "TamilBlasters"
+    ]
+    
     JOIN_TXT = """📢If you want to get the movie you asked for, you need to join both the channels given below. Please join first.\n\n📢നിങ്ങൾ ചോദിച്ചു സിനിമ ലഭിക്കണമെങ്കിൽ താഴെ നൽകിയിരിക്കുന്ന രണ്ട് ചാനലുകളിലും ജോയിൻ ചെയ്യേണ്ടതുണ്ട്.. ദയവായി ആദ്യം ജോയിൻ ചെയ്യുക.\n\nNB🚸 : ആദ്യത്തെ ചാനലിൽ ജോയിൻ ചെയ്ത് 2 Sec കഴിഞ്ഞ് രണ്ടാമത്തെ ചാനലിൽ ജോയിൻ ചെയ്യുക"""
     
     STATUS_TXT = """★ 𝚃𝙾𝚃𝙰𝙻 𝙵𝙸𝙻𝙴𝚂: <code>{}</code>
