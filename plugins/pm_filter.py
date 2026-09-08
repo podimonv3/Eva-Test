@@ -84,7 +84,7 @@ async def pm_text(bot: Client, message):
                      f"<code>Kuruthi 2019</code>\n\n"
                      f"💡 സിനിമയുടെ പേരിനൊപ്പം വർഷം കൂടി ടൈപ്പ് ചെയ്ത് അയക്കുക.</b>",
                 reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("🚸 MUST READ 🚸", url="https://telegra.ph/Request-അയകക-മനന-വയകകണടനനത-08-19")] 
+                    [InlineKeyboardButton("🚸 MUST READ 🚸", url="https://telegra.ph")] 
                 ])
             )
             
@@ -96,30 +96,67 @@ async def pm_text(bot: Client, message):
                 print(f"Error deleting alert message: {e}")
             return # കോഡ് ഇവിടെ അവസാനിക്കുന്നു, ലോഗ് ചാനലിലേക്ക് പോകില്ല.
 
-    # మెസ്സേജിന്റെ ടൈപ്പ് അനുസരിച്ച് ഉള്ളടക്കം വേർതിരിക്കുന്നു (Text/Caption/Sticker)
+    # ----------------------------------------------------
+    # ശരിയായ ഫോർമാറ്റ് / മീഡിയ ഫയൽ ആണെങ്കിൽ മാത്രം താഴോട്ടുള്ള കോഡ് വർക്ക് ചെയ്യും
+    # ----------------------------------------------------
+
+    # മെസ്സേജിന്റെ ടൈപ്പ് അനുസരിച്ച് ഉള്ളടക്കം വേർതിരിക്കുന്നു (Text/Caption/Sticker)
     content = message.text or message.caption or (f"Sent a Sticker [{message.sticker.emoji}]" if message.sticker else "Media File")
     
-    # യൂസർക്ക് മറുപടി അയക്കുന്നതിന് മുൻപ് 'Typing...' ആനിമേഷൻ കാണിക്കുന്നു (enums.ChatAction ഉപയോഗിച്ചു)
-    await bot.send_chat_action(chat_id=message.chat.id, action=enums.ChatAction.TYPING)
-    await asyncio.sleep(0.5)
-    
-    # യൂസർക്ക് ലഭിക്കുന്ന ഇൻസ്റ്റന്റ് റിപ്ലൈ മെസ്സേജ്
-    reply_msg = await message.reply_text(
-         text=f"<b>Your Request Has Been Submitted✅\n\nOTT Available Add Files With In 24Hrs.. Please Wait\n\nനിങ്ങളുടെ request അഡ്മിൻ അയച്ചിട്ടുണ്ട് ഫയൽസ് ഉണ്ടെങ്കിൽ 24മണിക്കൂറിനുള്ളിൽ ആഡ് ചെയ്യുന്നതാണ്</b>",   
-         reply_markup=InlineKeyboardMarkup([
-             [InlineKeyboardButton("🚫 ANY ERROR REPORT 🚫 ", url="https://t.me/Adhityan_edavattom")],
-             [InlineKeyboardButton("🚸 MUST READ 🚸", url="https://telegra.ph/Request-അയകക-മനന-വയകകണടനനത-08-19")] 
-         ])
-    )    
-    
-    # അഡ്മിന് ലഭിക്കുന്ന ലോഗ് മെസ്സേജിനുള്ള ഡയറക്റ്റ് ബട്ടൺ
+    # 🔍 DATABASE SEARCH (ടെക്സ്റ്റ് മെസ്സേജ് ആണെങ്കിൽ ഡാറ്റാബേസിൽ ഉണ്ടോ എന്ന് പരിശോധിക്കുന്നു)
+    files_found = False
+    if message.text:
+        search_query = message.text.strip()
+        # get_search_results ഫങ്ക്ഷൻ വഴി ഫയലുകൾ തിരയുന്നു
+        files, offset, total_results = await get_search_results(search_query, max_results=10)
+        
+        # ഡാറ്റാബേസിൽ ഫയലുകൾ കണ്ടെത്തുകയാണെങ്കിൽ
+        if files:
+            files_found = True
+            await bot.send_chat_action(chat_id=message.chat.id, action=enums.ChatAction.TYPING)
+            
+            # ഇവിടെ നിങ്ങളുടെ ബോട്ടിലെ സാധാരണ ഓട്ടോഫിൽറ്റർ റിപ്ലൈ കോഡ് നൽകാം (Buttons രൂപത്തിൽ)
+            # ഉദാഹരണത്തിന് ലളിതമായി ഫയലുകൾ കാണിക്കാൻ താഴെ നൽകുന്നു:
+            btn = []
+            for file in files:
+                btn.append([InlineKeyboardButton(text=f"🎬 {file.file_name}", callback_data=f"files#{file.file_id}")])
+                
+            await message.reply_text(
+                text=f"<b>✨ I found some results for your query: <code>{search_query}</code>\n\nഫയലുകൾ താഴെ നൽകുന്നു:</b>",
+                reply_markup=InlineKeyboardMarkup(btn)
+            )
+
+    # സിനിമ ഡാറ്റാബേസിൽ നിന്ന് കിട്ടിയിട്ടില്ലെങ്കിലോ അല്ലെങ്കിൽ ഇതൊരു മീഡിയ ഫയൽ ആണെങ്കിലോ പഴയ റിപ്ലൈ നൽകും
+    if not files_found:
+        await bot.send_chat_action(chat_id=message.chat.id, action=enums.ChatAction.TYPING)
+        await asyncio.sleep(0.5)
+        
+        reply_msg = await message.reply_text(
+             text=f"<b>Your Request Has Been Submitted✅\n\nOTT Available Add Files With In 24Hrs.. Please Wait\n\nനിങ്ങളുടെ request അഡ്മിൻ അയച്ചിട്ടുണ്ട് ഫയൽസ് ഉണ്ടെങ്കിൽ 24മണിക്കൂറിനുള്ളിൽ ആഡ് ചെയ്യുന്നതാണ്</b>",   
+             reply_markup=InlineKeyboardMarkup([
+                 [InlineKeyboardButton("🚫 ANY ERROR REPORT 🚫 ", url="https://t.me")],
+                 [InlineKeyboardButton("🚸 MUST READ 🚸", url="https://telegra.ph")] 
+             ])
+        )    
+        
+        # താത്കാലിക കൺഫർമേഷൻ മെസ്സേജ് 30 സെക്കൻഡിന് ശേഷം ഡിലീറ്റ് ചെയ്യാനുള്ള ടാസ്ക്
+        async def auto_delete():
+            await asyncio.sleep(30)
+            try: await bot.delete_messages(chat_id=message.chat.id, message_ids=[reply_msg.id])
+            except: pass
+        asyncio.create_task(auto_delete())
+
+    # ----------------------------------------------------
+    # 📢 LOG CHANNEL SECTION (എല്ലാ ശരിയായ റിക്വസ്റ്റുകളും ലോഗ് ചെയ്യുന്നു)
+    # ----------------------------------------------------
     log_reply_markup = InlineKeyboardMarkup([
         [InlineKeyboardButton("💬 MESSAGE USER (DIRECT)", url=f"tg://user?id={user_id}")]
     ])
     
-    log_text = f"<b># can_PM_MSG\n\nNᴀᴍᴇ : <a href='tg://user?id={user_id}'>{user}</a>\n\nID : <code>{user_id}</code>\n\nMᴇssᴀɢᴇ :</b> <code>{content}</code>\n\n#id{user_id}"
+    # സിനിമ ഡാറ്റാബേസിൽ ഉണ്ടോ ഇല്ലയോ എന്ന സ്റ്റാറ്റസ് കൂടി ലോഗ് ടെക്സ്റ്റിൽ കാണിക്കുന്നു
+    status_tag = " [FOUND IN DB 📁]" if files_found else " [NOT FOUND IN DB ❌]"
+    log_text = f"<b># can_PM_MSG{status_tag}\n\nNᴀᴍᴇ : <a href='tg://user?id={user_id}'>{user}</a>\n\nID : <code>{user_id}</code>\n\nMᴇssᴀɢᴇ :</b> <code>{content}</code>\n\n#id{user_id}"
     
-    # ഫയലിന്റെ തരം അനുസരിച്ച് അനിമേഷൻ സ്റ്റാറ്റസ് കാണിച്ചുകൊണ്ട് ലോഗ് ചാനലിലേക്ക് ഫോർവേഡ് ചെയ്യുന്നു
     if message.photo:
         await bot.send_chat_action(chat_id=LOG_CHANNEL, action=enums.ChatAction.UPLOAD_PHOTO)
         await bot.send_photo(chat_id=LOG_CHANNEL, photo=message.photo.file_id, caption=log_text, reply_markup=log_reply_markup)
@@ -127,23 +164,11 @@ async def pm_text(bot: Client, message):
         await bot.send_chat_action(chat_id=LOG_CHANNEL, action=enums.ChatAction.UPLOAD_VIDEO)
         await bot.send_video(chat_id=LOG_CHANNEL, video=message.video.file_id, caption=log_text, reply_markup=log_reply_markup)
     elif message.sticker:
-        # സ്റ്റിക്കർ ആണെങ്കിൽ ചാനലിൽ ഡീറ്റെയിൽസ് അയച്ച ശേഷം തൊട്ടുതാഴെ സ്റ്റിക്കർ അയക്കും
         await bot.send_message(chat_id=LOG_CHANNEL, text=log_text, reply_markup=log_reply_markup, disable_web_page_preview=True)
         await bot.send_sticker(chat_id=LOG_CHANNEL, sticker=message.sticker.file_id)
     else:
         await bot.send_chat_action(chat_id=LOG_CHANNEL, action=enums.ChatAction.TYPING)
-        await bot.send_message(chat_id=LOG_CHANNEL, text=log_text, reply_markup=log_reply_markup, disable_web_page_preview=True)    
-    
-    # 30 സെക്കൻഡ് കാത്തുനിൽക്കുന്നു
-    await asyncio.sleep(30)    
-    try:
-        # ബോട്ടിന്റെ താത്കാലിക കൺഫർമേഷൻ മറുപടി മാത്രം ഡിലീറ്റ് ചെയ്യുന്നു
-        await bot.delete_messages(
-            chat_id=message.chat.id, 
-            message_ids=[reply_msg.id]
-        )    
-    except Exception as e:
-        print(f"Error deleting messages: {e}")
+        await bot.send_message(chat_id=LOG_CHANNEL, text=log_text, reply_markup=log_reply_markup, disable_web_page_preview=True)
 
 
 
