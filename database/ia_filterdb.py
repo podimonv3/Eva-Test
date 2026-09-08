@@ -72,27 +72,24 @@ async def check_file(media):
         
 
 async def save_file(media):
-    """Save file in database after removing custom branding tags and cleaning symbols"""
-
-    # TODO: Find better way to get same file_id for same media to avoid duplicates
+    """Save file in database after removing strict branding tags from the START only and cleaning symbols"""
     file_id, file_ref = unpack_new_file_id(media.file_id)
-    
     raw_name = str(media.file_name).strip()
     cleaned_name = raw_name
 
-    # ✂️ 1. DYNAMIC BRANDING & ADVERTISEMENT REMOVAL
-    # Script.py-ലെ CUSTOM_TAGS അടിസ്ഥാനമാക്കി വെബ്‌സൈറ്റ് ലിങ്കുകളും ടെലിഗ്രാം ടാഗുകളും പൂർണ്ണമായി നീക്കം ചെയ്യുന്നു
+    # 🥇 1. STRICT ADVERTISEMENT REMOVAL FROM THE START ONLY
+    # Script.py-ൽ നിങ്ങൾ കൊടുക്കുന്ന കൃത്യമായ രൂപങ്ങൾ ([MS], @msp, www.1TamilMV.fun) 
+    # ഫയലിന്റെ ഏറ്റവും തുടക്കത്തിൽ വന്നാൽ മാത്രം നീക്കം ചെയ്യുന്നു.
     for tag in CUSTOM_TAGS:
-        # tag പാറ്റേൺ: [tag], (tag), @tag, ://tag.com, www_tag_fun, www-tag-fun, അല്ലെങ്കിൽ വാക്കുകൾക്കിടയിൽ വരുന്നത്
-        tag_pattern = rf'(?:www[\._\-]{re.escape(tag)}[\._\-][a-zA-Z0-9]+|www\.{re.escape(tag)}\.[a-zA-Z]{{2,6}}|\[{re.escape(tag)}\]|\({re.escape(tag)}\)|@{re.escape(tag)}|\b{re.escape(tag)}\b)'
-        cleaned_name = re.sub(tag_pattern, '', cleaned_name, flags=re.IGNORECASE).strip()
-    
-    # ✂️ 2. REMOVE ALL REMAINING SYMBOLS
-    # ബാക്കിയുള്ള എല്ലാ ചിഹ്നങ്ങളും (English/Malayalam അക്ഷരങ്ങളും അക്കങ്ങളും ഒഴികെ) മാറ്റി സ്പേസ് ആക്കുന്നു
+        # ഫയലിന്റെ തുടക്കത്തിൽ (^) ആ പരസ്യം ഉണ്ടോ എന്ന് നോക്കുന്നു (Case-insensitive)
+        if cleaned_name.lower().startswith(tag.lower()):
+            tag_len = len(tag)
+            # പരസ്യം മാത്രം മുറിച്ചു മാറ്റുന്നു, ബാക്കിയുള്ള ചിഹ്നങ്ങളും സ്പേസും തനിയെ ക്രമീകരിക്കും
+            cleaned_name = cleaned_name[tag_len:].strip()
+
+    # 🥈 2. REMOVE ALL REMAINING SYMBOLS & CLEAN DOUBLE SPACES
+    # സിനിമയുടെ ഉള്ളിലുള്ള ബ്രാക്കറ്റുകളും മറ്റ് ചിഹ്നങ്ങളും മാറ്റി സ്പേസ് ആക്കുന്നു
     cleaned_symbols = re.sub(r'[^a-zA-Z0-9\u0D00-\u0D7F\s]', ' ', cleaned_name)
-    
-    # 🧼 3. CLEAN DOUBLE SPACES
-    # ചിഹ്നങ്ങൾ മാറുമ്പോൾ ഉണ്ടാകുന്ന ഇരട്ട സ്പേസുകൾ ഒഴിവാക്കി ഒരൊറ്റ സ്പേസ് ആക്കുന്നു
     file_name = re.sub(r'\s+', ' ', cleaned_symbols).strip()
     
     if not file_name:
@@ -115,32 +112,25 @@ async def save_file(media):
         try:
             await file.commit()
         except DuplicateKeyError:      
-            logger.warning(
-                f'{getattr(media, "file_name", "NO_FILE")} is already saved in database'
-            )
             return False, 0
         else:
             logger.info(f'{file_name} is saved to database')
             return True, 1
 
 async def save_filea(media):
-    """Save file in database after removing custom branding tags and cleaning symbols"""
-
-    # TODO: Find better way to get same file_id for same media to avoid duplicates
+    """Save file in database after removing strict branding tags from the START only and cleaning symbols"""
     file_id, file_ref = unpack_new_file_id(media.file_id)
-    
     raw_name = str(media.file_name).strip()
     cleaned_name = raw_name
 
-    # ✂️ 1. DYNAMIC BRANDING & ADVERTISEMENT REMOVAL
+    # 🥇 1. STRICT ADVERTISEMENT REMOVAL FROM THE START ONLY
     for tag in CUSTOM_TAGS:
-        tag_pattern = rf'(?:www[\._\-]{re.escape(tag)}[\._\-][a-zA-Z0-9]+|www\.{re.escape(tag)}\.[a-zA-Z]{{2,6}}|\[{re.escape(tag)}\]|\({re.escape(tag)}\)|@{re.escape(tag)}|\b{re.escape(tag)}\b)'
-        cleaned_name = re.sub(tag_pattern, '', cleaned_name, flags=re.IGNORECASE).strip()
-    
-    # ✂️ 2. REMOVE ALL REMAINING SYMBOLS
+        if cleaned_name.lower().startswith(tag.lower()):
+            tag_len = len(tag)
+            cleaned_name = cleaned_name[tag_len:].strip()
+
+    # 🥈 2. REMOVE ALL REMAINING SYMBOLS & CLEAN DOUBLE SPACES
     cleaned_symbols = re.sub(r'[^a-zA-Z0-9\u0D00-\u0D7F\s]', ' ', cleaned_name)
-    
-    # 🧼 3. CLEAN DOUBLE SPACES
     file_name = re.sub(r'\s+', ' ', cleaned_symbols).strip()
     
     if not file_name:
@@ -163,15 +153,10 @@ async def save_filea(media):
         try:
             await file.commit()
         except DuplicateKeyError:      
-            logger.warning(
-                f'{getattr(media, "file_name", "NO_FILE")} is already saved in database'
-            )
             return False, 0
         else:
             logger.info(f'{file_name} is saved to database')
             return True, 1
-
-            
 
 async def delete_files_below_threshold(db, threshold_size_mb: int = 50, batch_size: int = 20, chat_id: int = None, message_id: int = None):
     cursor_media = Media.find({"file_size": {"$lt": threshold_size_mb * 1024 * 1024}}).limit(batch_size // 2)
