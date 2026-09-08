@@ -273,28 +273,37 @@ async def next_page(bot, query):
 
     settings = await get_settings(query.message.chat.id)
 
-    if settings['button']:
-        btn = [
-            [
+    btn = []
+    for file in files:
+        # ✂️ BUTTON TEXT CLEANING LOGIC (ബട്ടണിലെ പേര് മാത്രം ക്ലീൻ ചെയ്യുന്നു)
+        display_name = file.file_name
+        # ഫയലിന്റെ തുടക്കത്തിലുള്ള [MS], [ms], [any_tag], @channel ടാഗുകൾ, അനാവശ്യ ചിഹ്നങ്ങൾ എന്നിവ നീക്കം ചെയ്യുന്നു
+        display_name = re.sub(r'^(?:\[[^\]]+\]|\([^)]+\)|@[^\s]+|[\s🎬⭐🌟-_\.]+)+', '', display_name).strip()
+        
+        # ഒരുപക്ഷേ ക്ലീൻ ചെയ്ത ശേഷം പേര് ശൂന്യമായാൽ പഴയ പേര് തന്നെ നിലനിർത്തും
+        if not display_name:
+            display_name = file.file_name
+
+        if settings['button']:
+            # Single Button ഫോർമാറ്റ്
+            btn.append([
                 InlineKeyboardButton(
-                    text=f"{get_size(file.file_size)}►{file.file_name}", callback_data=f'files#{file.file_id}'
+                    text=f"{get_size(file.file_size)}►{display_name}", 
+                    callback_data=f'files#{file.file_id}'
                 ),
-            ]
-            for file in files
-        ]
-    else:
-        btn = [
-            [
+            ])
+        else:
+            # Double Button ഫോർമാറ്റ്
+            btn.append([
                 InlineKeyboardButton(
-                    text=f"{file.file_name}", callback_data=f'files#{file.file_id}'
+                    text=f"{display_name}", 
+                    callback_data=f'files#{file.file_id}'
                 ),
                 InlineKeyboardButton(
                     text=f"{get_size(file.file_size)}",
                     callback_data=f'files_#{file.file_id}',
                 ),
-            ]
-            for file in files
-        ]
+            ])
 
     if 0 < offset < 10:
         off_set = 0
@@ -302,7 +311,6 @@ async def next_page(bot, query):
         off_set = None
     else:
         off_set = offset - 10
-
     if n_offset == '':
         btn.append(
             [InlineKeyboardButton("↵ Bᴀᴄᴋ", callback_data=f"next_{req}_{key}_{off_set}"),
@@ -858,8 +866,6 @@ async def auto_filter(client, msg, spoll=False):
                         log_db = clientDB.search_logs
                         current_time = datetime.now()
 
-                        # (നിങ്ങളുടെ പഴയ കോഡിന്റെ ബാക്കി ഭാഗം ഇവിടെ തുടരും...)
-
                         # 24 മണിക്കൂർ കഴിഞ്ഞ പഴയ ലോഗുകൾ നീക്കം ചെയ്യുന്നു
                         time_limit = current_time - timedelta(hours=24)
                         await log_db.delete_many({"timestamp": {"$lt": time_limit}})
@@ -891,37 +897,47 @@ async def auto_filter(client, msg, spoll=False):
 
                 # സ്പെൽ ചെക്ക് ഓൺ ആണോ ഓഫ് ആണോ എന്ന് നോക്കാതെ നേരിട്ട് ഫങ്ഷൻ വർക്ക് ചെയ്യിക്കുന്നു
                 return await advantage_spell_chok(client, msg)
-        else:
-            return
+            else:
+                return
     else:
-        settings = await get_settings(msg.message.chat.id)      
-        message = msg.message.reply_to_message  # msg will be callback query
-        search, files, offset, total_results = spoll
+        return
+else:
+    settings = await get_settings(msg.message.chat.id)      
+    message = msg.message.reply_to_message  # msg will be callback query
+    search, files, offset, total_results = spoll
     pre = 'filep' if settings['file_secure'] else 'file'
-    if settings["button"]:
-        # ഇതിന് താഴോട്ട് നിങ്ങളുടെ ഫയലിലുള്ള ബാക്കി കോഡ് (ബട്ടണുകൾ നിർമ്മിക്കുന്ന ഭാഗം) അതുപോലെ തന്നെ വെക്കുക.
-        btn = [
-            [
+
+    btn = []
+    for file in files:
+        # ✂️ BUTTON TEXT CLEANING LOGIC (ബട്ടണിലെ പേര് മാത്രം ക്ലീൻ ചെയ്യുന്നു)
+        display_name = file.file_name
+        # ഫയലിന്റെ തുടക്കത്തിലുള്ള [MS], [ms], [any_tag], @channel ടാഗുകൾ, അനാവശ്യ ചിഹ്നങ്ങൾ എന്നിവ നീക്കം ചെയ്യുന്നു
+        display_name = re.sub(r'^(?:\[[^\]]+\]|\([^)]+\)|@[^\s]+|[\s🎬⭐🌟-_\.]+)+', '', display_name).strip()
+        
+        # ഒരുപക്ഷേ ക്ലീൻ ചെയ്ത ശേഷം പേര് ശൂന്യമായാൽ പഴയ പേര് തന്നെ നിലനിർത്തും (സുരക്ഷയ്ക്ക് വേണ്ടി)
+        if not display_name:
+            display_name = file.file_name
+
+        if settings["button"]:
+            # Single Button ഫോർമാറ്റ് (ടാഗ് ഇല്ലാത്ത പേര് നൽകുന്നു)
+            btn.append([
                 InlineKeyboardButton(
-                    text=f"{get_size(file.file_size)}►{file.file_name}", callback_data=f'{pre}#{file.file_id}'
+                    text=f"{get_size(file.file_size)}►{display_name}", 
+                    callback_data=f'{pre}#{file.file_id}'
                 ),
-            ]
-            for file in files
-        ]
-    else:
-        btn = [
-            [
+            ])
+        else:
+            # Double Button ഫോർമാറ്റ് (ടാഗ് ഇല്ലാത്ത പേര് നൽകുന്നു)
+            btn.append([
                 InlineKeyboardButton(
-                    text=f"{file.file_name}",
+                    text=f"{display_name}",
                     callback_data=f'{pre}#{file.file_id}',
                 ),
                 InlineKeyboardButton(
                     text=f"{get_size(file.file_size)}",
                     callback_data=f'{pre}#{file.file_id}',
                 ),
-            ]
-            for file in files
-        ]
+            ])
 
     if offset != "":
         try:
