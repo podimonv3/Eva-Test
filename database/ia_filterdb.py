@@ -242,24 +242,40 @@ async def get_search_results(query, file_type=None, max_results=10, offset=0, fi
             interleaved_files.append(files_mediaa[index_media2])
             index_media2 += 1
 
-    # 🔍 NEW SORTING LOGIC: ഫയലുകൾ യൂസർക്ക് കാണിക്കുന്നതിന് മുൻപ് അവയുടെ പേര് പരിശോധിക്കുന്നു.
-    # തിരഞ്ഞ വാക്ക് ഫയലിന്റെ തുടക്കത്തിൽ വരുന്ന യഥാർത്ഥ സിനിമകൾക്ക് ഏറ്റവും ഉയർന്ന മുൻഗണന നൽകുന്നു.
+        # 🔍 UPDATED SORTING LOGIC: EXACT FULL WORD MATCH PRIORITY
     if interleaved_files:
         query_lower = query.lower()
         
         def sort_by_exact_match(file_obj):
             file_name_lower = file_obj.file_name.lower()
-            # 1. യൂസർ തിരഞ്ഞ വാക്കിലാണ് സിനിമയുടെ പേര് തുടങ്ങുന്നതെങ്കിൽ ഒന്നാം സ്ഥാനം (0)
+            
+            # 1. ഫയലിന്റെ പേര് ക്ലീൻ ചെയ്ത് നോക്കുമ്പോൾ യൂസർ തിരഞ്ഞ വാക്ക് മാത്രമാണെങ്കിൽ
+            # ഉദാഹരണത്തിന്: "love" എന്ന് തിരയുമ്പോൾ "Love (2020)" അല്ലെങ്കിൽ "Love.2020" അല്ലെങ്കിൽ "Love - 2020" എന്ന് വരുന്നത്
+            # ഇതിനായി വർഷത്തിന് മുൻപുള്ള ഭാഗം കൃത്യമായി മാച്ച് ആകുന്നുണ്ടോ എന്ന് നോക്കുന്നു.
+            clean_name = re.sub(r'[\.\+_\-\(\)\[\]]', ' ', file_name_lower).strip()
+            name_words = clean_name.split()
+            
+            # ആദ്യത്തെ വാക്ക് കൃത്യമായി 'love' ആയിരിക്കുകയും രണ്ടാമത്തെ വാക്ക് ഒരു വർഷം (4 അക്കം) ആയിരിക്കുകയും ചെയ്താൽ ഏറ്റവും ഉയർന്ന മുൻഗണന (0)
+            if name_words and name_words[0] == query_lower:
+                if len(name_words) > 1 and name_words[1].isdigit() and len(name_words[1]) == 4:
+                    return 0
+                # വെറും 'love' എന്ന് മാത്രമാണ് ഫയൽ നെയിമെങ്കിൽ അതിനും (0) മുൻഗണന
+                if len(name_words) == 1:
+                    return 0
+            
+            # 2. യൂസർ തിരഞ്ഞ വാക്കിലാണ് സിനിമയുടെ പേര് തുടങ്ങുന്നതെങ്കിൽ (ഉദാഹരണത്തിന്: Love Action Drama) അടുത്ത മുൻഗണന (1)
             if file_name_lower.startswith(query_lower):
-                return 0
-            # 2. ഫയലിന്റെ പേരിന്റെ എവിടെയെങ്കിലും ആ വാക്ക് കൃത്യമായി വേർതിരിഞ്ഞു നിൽക്കുന്നുണ്ടെങ്കിൽ രണ്ടാം സ്ഥാനം (1)
-            elif f" {query_lower} " in f" {file_name_lower} " and not file_name_lower.endswith(f"-{query_lower}.mkv") and not file_name_lower.endswith(f"-{query_lower}.mp4"):
                 return 1
-            # 3. പേരിന്റെ അവസാനം ടാഗ് ആയിട്ടാണ് വരുന്നതെങ്കിൽ ഏറ്റവും അവസാന സ്ഥാനം (2)
-            return 2
+                
+            # 3. ഫയലിന്റെ പേരിന്റെ എവിടെയെങ്കിലും ആ വാക്ക് കൃത്യമായി ഉണ്ടെങ്കിൽ മൂന്നാം മുൻഗണന (2)
+            elif f" {query_lower} " in f" {file_name_lower} " and not file_name_lower.endswith(f"-{query_lower}.mkv") and not file_name_lower.endswith(f"-{query_lower}.mp4"):
+                return 2
+                
+            # 4. പേരിന്റെ അവസാനം ടാഗ് ആയിട്ടാണ് വരുന്നതെങ്കിൽ ഏറ്റവും അവസാന സ്ഥാനം (3)
+            return 3
 
         interleaved_files = sorted(interleaved_files, key=sort_by_exact_match)
-
+        
     # യൂസർ ആവശ്യപ്പെട്ട പേജ് അനുസരിച്ചുള്ള റിസൾട്ടുകൾ മുറിച്ചെടുക്കുന്നു (Offset slicing)
     files = interleaved_files[offset:offset + max_results]
     next_offset = offset + len(files)
