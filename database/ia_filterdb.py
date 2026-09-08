@@ -77,10 +77,9 @@ async def save_file(media):
     
     raw_name = str(media.file_name).strip()
     
-    # 1. ✂️ REMOVE WEBSITES, TELEGRAM TAGS & BRACKETS FROM THE START
-    # ഫയലിന്റെ തുടക്കത്തിൽ വരുന്ന www..., .rsvp, @username, [tags] എന്നിവ നീക്കം ചെയ്യുന്നു
-    # (flags=re.IGNORECASE ഉള്ളതുകൊണ്ട് Small/Capital അക്ഷരങ്ങൾ ഒരുപോലെ മാറും)
-    cleaned_start = re.sub(r'^(?:www\.[a-zA-Z0-9-]+\.[a-zA-Z]{2,6}(?:\.[a-zA-Z]{2,4})?|@[a-zA-Z0-9_]+|\[[^\]]+\]|\([^)]+\)|[\s🎬⭐🌟-_\.]+)+', '', raw_name).strip()
+    # 1. ✂️ REMOVE WEBSITES, TELEGRAM TAGS & BRACKETS FROM THE START (FIXED REGEX)
+    # ഡാഷ് ചിഹ്നം (\-) കൃത്യമായി എസ്‌കേപ്പ് ചെയ്തുകൊണ്ട് 'bad character range' എറർ പൂർണ്ണമായി പരിഹരിച്ചു
+    cleaned_start = re.sub(r'^(?:www\.[a-zA-Z0-9-]+\.[a-zA-Z]{2,6}(?:\.[a-zA-Z]{2,4})?|@[a-zA-Z0-9_]+|\[[^\]]+\]|\([^)]+\)|[\s🎬⭐🌟\-_+.\)]+)+', '', raw_name).strip()
     
     # 2. ✂️ REMOVE ALL REMAINING SYMBOLS
     # ബാക്കിയുള്ള ചിഹ്നങ്ങൾ (English & Malayalam അക്ഷരങ്ങളും അക്കങ്ങളും ഒഴികെ) മാറ്റി സ്പേസ് ആക്കുന്നു
@@ -126,8 +125,8 @@ async def save_filea(media):
     
     raw_name = str(media.file_name).strip()
     
-    # 1. ✂️ REMOVE WEBSITES, TELEGRAM TAGS & BRACKETS FROM THE START
-    cleaned_start = re.sub(r'^(?:www\.[a-zA-Z0-9-]+\.[a-zA-Z]{2,6}(?:\.[a-zA-Z]{2,4})?|@[a-zA-Z0-9_]+|\[[^\]]+\]|\([^)]+\)|[\s🎬⭐🌟-_\.]+)+', '', raw_name).strip()
+    # 1. ✂️ REMOVE WEBSITES, TELEGRAM TAGS & BRACKETS FROM THE START (FIXED REGEX)
+    cleaned_start = re.sub(r'^(?:www\.[a-zA-Z0-9-]+\.[a-zA-Z]{2,6}(?:\.[a-zA-Z]{2,4})?|@[a-zA-Z0-9_]+|\[[^\]]+\]|\([^)]+\)|[\s🎬⭐🌟\-_+.\)]+)+', '', raw_name).strip()
     
     # 2. ✂️ REMOVE ALL REMAINING SYMBOLS
     cleaned_symbols = re.sub(r'[^a-zA-Z0-9\u0D00-\u0D7F\s]', ' ', cleaned_start)
