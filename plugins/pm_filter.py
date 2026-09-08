@@ -894,31 +894,31 @@ async def auto_filter(client, msg, spoll=False):
         else:
             return
     else:
-        settings = await get_settings(msg.message.chat.id)      
-        message = msg.message.reply_to_message  # msg will be callback query
-        search, files, offset, total_results = spoll
-    pre = 'filep' if settings['file_secure'] else 'file'
+    settings = await get_settings(msg.message.chat.id)      
+    message = msg.message.reply_to_message  # msg will be callback query
+    search, files, offset, total_results = spoll
+    pre = 'filep' if settings['file_secure'] else 'file'    
     
-btn = []
+    btn = []
     for file in files:
-    display_name = file.file_name
-        # ഫയലിന്റെ തുടക്കത്തിലുള്ള [MS], [ms], [any_tag], @channel ടാഗുകൾ, അനാവശ്യ ചിഹ്നങ്ങൾ എന്നിവ നീക്കം ചെയ്യുന്നു
-    display_name = re.sub(r'^(?:\[[^\]]+\]|\([^)]+\)|@[^\s]+|[\s🎬⭐🌟-_\.]+)+', '', display_name).strip()
-    if not display_name:
         display_name = file.file_name
-    if settings["button"]:
-        # ഇതിന് താഴോട്ട് നിങ്ങളുടെ ഫയലിലുള്ള ബാക്കി കോഡ് (ബട്ടണുകൾ നിർമ്മിക്കുന്ന ഭാഗം) അതുപോലെ തന്നെ വെക്കുക.
-        btn = [
-            [
+        # ഫയലിന്റെ തുടക്കത്തിലുള്ള [MS], [ms], [any_tag], @channel ടാഗുകൾ, അനാവശ്യ ചിഹ്നങ്ങൾ എന്നിവ നീക്കം ചെയ്യുന്നു
+        display_name = re.sub(r'^(?:\[[^\]]+\]|\([^)]+\)|@[^\s]+|[\s🎬⭐🌟-_\.]+)+', '', display_name).strip()
+        
+        if not display_name:
+            display_name = file.file_name
+            
+        if settings["button"]:
+            # Single Button ഫോർമാറ്റ്
+            btn.append([
                 InlineKeyboardButton(
-                    text=f"{get_size(file.file_size)}►{display_name}", callback_data=f'{pre}#{file.file_id}'
+                    text=f"{get_size(file.file_size)}►{display_name}", 
+                    callback_data=f'{pre}#{file.file_id}'
                 ),
-            ]
-            for file in files
-        ]
-    else:
-        btn = [
-            [
+            ])
+        else:
+            # Double Button ഫോർമാറ്റ്
+            btn.append([
                 InlineKeyboardButton(
                     text=f"{display_name}",
                     callback_data=f'{pre}#{file.file_id}',
@@ -927,9 +927,7 @@ btn = []
                     text=f"{get_size(file.file_size)}",
                     callback_data=f'{pre}#{file.file_id}',
                 ),
-            ]
-            for file in files
-        ]
+            ])
 
     if offset != "":
         try:
