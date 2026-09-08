@@ -80,11 +80,11 @@ Name - {}
 
 
 
-# 🚫 ചിഹ്നങ്ങൾ പൂർണ്ണമായി ഒഴിവാക്കി വെറും വാക്കുകൾ മാത്രം നൽകുക
+# 🚫 ഒഴിവാക്കേണ്ട പരസ്യങ്ങൾ അവയുടെ ഒറിജിനൽ രൂപത്തിൽ ചിഹ്നങ്ങളോടെ ഇവിടെ നൽകാം
 CUSTOM_TAGS = [
-    "msp", 
-    "1TamilMV",
-    "ms", 
-    "team-ms",    
-    "HEVC_Cinemaz"
+    "[MS]", 
+    "@msp",
+    "@HEVC_Cinemaz",
+    "www.1TamilMV.fun",
+    "www_1TamilMV_fun"
 ]
