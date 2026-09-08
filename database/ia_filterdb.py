@@ -8,6 +8,7 @@ from umongo import Instance, Document, fields
 from motor.motor_asyncio import AsyncIOMotorClient
 from marshmallow.exceptions import ValidationError
 from info import DATABASE_URI, DATABASE_URI2, DATABASE_URI3, DATABASE_NAME, COLLECTION_NAME, USE_CAPTION_FILTER
+from Script import CUSTOM_TAGS
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -69,12 +70,34 @@ async def check_file(media):
         okda = "okda"
         return okda
         
+
 async def save_file(media):
-    """Save file in database"""
+    """Save file in database after removing custom branding tags and cleaning symbols"""
 
     # TODO: Find better way to get same file_id for same media to avoid duplicates
     file_id, file_ref = unpack_new_file_id(media.file_id)
-    file_name = re.sub(r"(_|\-|\.|\+)", " ", str(media.file_name))
+    
+    raw_name = str(media.file_name).strip()
+    cleaned_name = raw_name
+
+    # ✂️ 1. DYNAMIC BRANDING & ADVERTISEMENT REMOVAL
+    # Script.py-ലെ CUSTOM_TAGS അടിസ്ഥാനമാക്കി വെബ്‌സൈറ്റ് ലിങ്കുകളും ടെലിഗ്രാം ടാഗുകളും പൂർണ്ണമായി നീക്കം ചെയ്യുന്നു
+    for tag in CUSTOM_TAGS:
+        # tag പാറ്റേൺ: [tag], (tag), @tag, ://tag.com, www_tag_fun, www-tag-fun, അല്ലെങ്കിൽ വാക്കുകൾക്കിടയിൽ വരുന്നത്
+        tag_pattern = rf'(?:www[\._\-]{re.escape(tag)}[\._\-][a-zA-Z0-9]+|www\.{re.escape(tag)}\.[a-zA-Z]{{2,6}}|\[{re.escape(tag)}\]|\({re.escape(tag)}\)|@{re.escape(tag)}|\b{re.escape(tag)}\b)'
+        cleaned_name = re.sub(tag_pattern, '', cleaned_name, flags=re.IGNORECASE).strip()
+    
+    # ✂️ 2. REMOVE ALL REMAINING SYMBOLS
+    # ബാക്കിയുള്ള എല്ലാ ചിഹ്നങ്ങളും (English/Malayalam അക്ഷരങ്ങളും അക്കങ്ങളും ഒഴികെ) മാറ്റി സ്പേസ് ആക്കുന്നു
+    cleaned_symbols = re.sub(r'[^a-zA-Z0-9\u0D00-\u0D7F\s]', ' ', cleaned_name)
+    
+    # 🧼 3. CLEAN DOUBLE SPACES
+    # ചിഹ്നങ്ങൾ മാറുമ്പോൾ ഉണ്ടാകുന്ന ഇരട്ട സ്പേസുകൾ ഒഴിവാക്കി ഒരൊറ്റ സ്പേസ് ആക്കുന്നു
+    file_name = re.sub(r'\s+', ' ', cleaned_symbols).strip()
+    
+    if not file_name:
+        file_name = raw_name
+
     try:
         file = Media(
             file_id=file_id,
@@ -95,18 +118,34 @@ async def save_file(media):
             logger.warning(
                 f'{getattr(media, "file_name", "NO_FILE")} is already saved in database'
             )
-
             return False, 0
         else:
-            logger.info(f'{getattr(media, "file_name", "NO_FILE")} is saved to database')
+            logger.info(f'{file_name} is saved to database')
             return True, 1
 
 async def save_filea(media):
-    """Save file in database"""
+    """Save file in database after removing custom branding tags and cleaning symbols"""
 
     # TODO: Find better way to get same file_id for same media to avoid duplicates
     file_id, file_ref = unpack_new_file_id(media.file_id)
-    file_name = re.sub(r"(_|\-|\.|\+)", " ", str(media.file_name))
+    
+    raw_name = str(media.file_name).strip()
+    cleaned_name = raw_name
+
+    # ✂️ 1. DYNAMIC BRANDING & ADVERTISEMENT REMOVAL
+    for tag in CUSTOM_TAGS:
+        tag_pattern = rf'(?:www[\._\-]{re.escape(tag)}[\._\-][a-zA-Z0-9]+|www\.{re.escape(tag)}\.[a-zA-Z]{{2,6}}|\[{re.escape(tag)}\]|\({re.escape(tag)}\)|@{re.escape(tag)}|\b{re.escape(tag)}\b)'
+        cleaned_name = re.sub(tag_pattern, '', cleaned_name, flags=re.IGNORECASE).strip()
+    
+    # ✂️ 2. REMOVE ALL REMAINING SYMBOLS
+    cleaned_symbols = re.sub(r'[^a-zA-Z0-9\u0D00-\u0D7F\s]', ' ', cleaned_name)
+    
+    # 🧼 3. CLEAN DOUBLE SPACES
+    file_name = re.sub(r'\s+', ' ', cleaned_symbols).strip()
+    
+    if not file_name:
+        file_name = raw_name
+
     try:
         file = Mediaa(
             file_id=file_id,
@@ -127,11 +166,11 @@ async def save_filea(media):
             logger.warning(
                 f'{getattr(media, "file_name", "NO_FILE")} is already saved in database'
             )
-
             return False, 0
         else:
-            logger.info(f'{getattr(media, "file_name", "NO_FILE")} is saved to database')
+            logger.info(f'{file_name} is saved to database')
             return True, 1
+
             
 
 async def delete_files_below_threshold(db, threshold_size_mb: int = 50, batch_size: int = 20, chat_id: int = None, message_id: int = None):
