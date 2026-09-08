@@ -163,7 +163,7 @@ async def admin_reply_to_user(bot: Client, message):
     
     if match:
         user_id = int(match.group(1))
-        reply_caption = f"<b>💬 Message From Admin:\n\n{message.caption}</b>" if message.caption else "<b>💬 Message From Admin</b>"
+        reply_caption = f"<b>{message.caption}</b>" if message.caption else "🫴❤️"
         
         try:
             if message.photo:
