@@ -63,12 +63,41 @@ async def pm_text(bot: Client, message):
     user_id = message.from_user.id
     user = message.from_user.first_name or "User"
     
-    # മെസ്സേജിന്റെ ടൈപ്പ് അനുസരിച്ച് ഉള്ളടക്കം വേർതിരിക്കുന്നു (Text/Caption/Sticker)
-    content = message.text or message.caption or (f"Sent a Sticker [{message.sticker.emoji}]" if message.sticker else "Media File")
-    
     # കമാൻഡുകളും അഡ്മിൻ മെസ്സേജുകളും ഇഗ്നോർ ചെയ്യുന്നു
     if message.text and (message.text.startswith("/") or message.text.startswith("#")): return  
     if user_id in ADMINS: return 
+    
+    # 🔍 TEXT ONLY VALIDATION (ടെക്സ്റ്റ് മെസ്സേജുകൾക്ക് മാത്രം ഫോർമാറ്റ് പരിശോധിക്കുന്നു)
+    if message.text:
+        text_to_check = message.text.strip()
+        # മെസ്സേജിന്റെ അവസാനം 1900-2029 വരെയുള്ള 4 അക്ക വർഷമുണ്ടോ എന്ന് നോക്കുന്നു
+        if not re.search(r'\b(19\d{2}|20[0-2]\d)\b$', text_to_check):
+            await bot.send_chat_action(chat_id=message.chat.id, action=enums.ChatAction.TYPING)
+            await asyncio.sleep(0.5)
+            
+            # തെറ്റായ ഫോർമാറ്റിന് നൽകുന്ന മറുപടി അലെർട്ട്
+            alert_msg = await message.reply_text(
+                text=f"<b>❌ Wrong Format / തെറ്റായ ഫോർമാറ്റ്!\n\n"
+                     f"Please send your request in this format:\n"
+                     f"<code>Movie Name + Year</code>\n\n"
+                     f"Example:\n"
+                     f"<code>Kuruthi 2019</code>\n\n"
+                     f"💡 സിനിമയുടെ പേരിനൊപ്പം വർഷം കൂടി ടൈപ്പ് ചെയ്ത് അയക്കുക.</b>",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("🚸 MUST READ 🚸", url="https://telegra.ph/Request-അയകക-മനന-വയകകണടനനത-08-19")] 
+                ])
+            )
+            
+            # 30 സെക്കൻഡിന് ശേഷം അലെർട്ട് മെസ്സേജ് ഡിലീറ്റ് ചെയ്യുന്നു
+            await asyncio.sleep(30)
+            try:
+                await bot.delete_messages(chat_id=message.chat.id, message_ids=[alert_msg.id])
+            except Exception as e:
+                print(f"Error deleting alert message: {e}")
+            return # കോഡ് ഇവിടെ അവസാനിക്കുന്നു, ലോഗ് ചാനലിലേക്ക് പോകില്ല.
+
+    # మెസ്സേജിന്റെ ടൈപ്പ് അനുസരിച്ച് ഉള്ളടക്കം വേർതിരിക്കുന്നു (Text/Caption/Sticker)
+    content = message.text or message.caption or (f"Sent a Sticker [{message.sticker.emoji}]" if message.sticker else "Media File")
     
     # യൂസർക്ക് മറുപടി അയക്കുന്നതിന് മുൻപ് 'Typing...' ആനിമേഷൻ കാണിക്കുന്നു (enums.ChatAction ഉപയോഗിച്ചു)
     await bot.send_chat_action(chat_id=message.chat.id, action=enums.ChatAction.TYPING)
@@ -115,6 +144,7 @@ async def pm_text(bot: Client, message):
         )    
     except Exception as e:
         print(f"Error deleting messages: {e}")
+
 
 
 # =====================================================================
