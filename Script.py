@@ -85,5 +85,6 @@ CUSTOM_TAGS = [
     "msp", 
     "1TamilMV",
     "ms", 
-    "team-ms"
+    "team-ms",
+    "HEVC Cinemaz"
 ]
