@@ -845,35 +845,8 @@ async def auto_filter(client, msg, spoll=False):
             if not search:
                 return
 
-            # 10. ഡാറ്റാബേസിൽ തിരയുന്നു                   
+            # 10. ഡാറ്റാബേസിൽ തിരയുന്നു (ഇത് ഇപ്പോൾ ia_filterdb.py വഴി തനിയെ സോർട്ട് ചെയ്ത് വരും)
             files, offset, total_results = await get_search_results(search, offset=0, filter=True)
-            
-            # 🔍 ADVANCED PRIORITY SORTING FOR FILENAME ENDINGS
-            if files:
-                query_lower = search.lower()
-                
-                # ഫയലുകളുടെ പേരിൽ യൂസർ തിരഞ്ഞ വാക്ക് ഉണ്ടെന്ന് ഉറപ്പുവരുത്തുന്നു
-                filtered_files = [f for f in files if query_lower in f.file_name.lower()]
-                
-                if filtered_files:
-                    def sort_priority(file_obj):
-                        file_name_lower = file_obj.file_name.lower()
-                        
-                        # 🥇 മുൻഗണന 1: സിനിമയുടെ പേര് കൃത്യമായി 'bigil' എന്ന് തുടങ്ങുകയോ, അല്ലെങ്കിൽ 'bigil 2019' എന്ന രീതിയിലോ ആണെങ്കിൽ (ഏറ്റവും ഉയർന്ന മുൻഗണന)
-                        if file_name_lower.startswith(query_lower) or f"{query_lower} 2" in file_name_lower or f"{query_lower}.2" in file_name_lower:
-                            return 0
-                        
-                        # 🥈 മുൻഗണന 2: ഫയലിന്റെ പേരിന് നടുവിലാണ് 'bigil' എങ്കിൽ (രണ്ടാം മുൻഗണന)
-                        elif f" {query_lower} " in f" {file_name_lower} " and not file_name_lower.endswith(f"-{query_lower}.mkv") and not file_name_lower.endswith(f"-{query_lower}.mp4"):
-                            return 1
-                            
-                        # 🥉 മുൻഗണന 3: ഫയലിന്റെ ഏറ്റവും അവസാനം ടാഗ് ആയിട്ടാണ് (-BiGiL) വരുന്നതെങ്കിൽ (ഏറ്റവും കുറഞ്ഞ മുൻഗണന)
-                        return 2
-
-                    # മുൻഗണനാ ക്രമത്തിൽ ലിസ്റ്റ് സോർട്ട് ചെയ്യുന്നു
-                    files = sorted(filtered_files, key=sort_priority)
-                else:
-                    files = files
 
             if not files:
                 # === CUSTOM CODE: ഗ്രൂപ്പുകളിൽ നിന്നുള്ള കിട്ടാത്ത ഫയലുകൾ മാത്രം സേവ് ചെയ്യുന്നു ===
@@ -884,6 +857,7 @@ async def auto_filter(client, msg, spoll=False):
                         from database.ia_filterdb import db as clientDB
                         log_db = clientDB.search_logs
                         current_time = datetime.now()
+
                         # (നിങ്ങളുടെ പഴയ കോഡിന്റെ ബാക്കി ഭാഗം ഇവിടെ തുടരും...)
 
                         # 24 മണിക്കൂർ കഴിഞ്ഞ പഴയ ലോഗുകൾ നീക്കം ചെയ്യുന്നു
