@@ -70,16 +70,16 @@ async def check_file(media):
         return okda
         
 async def save_file(media):
-    """Save file in database after removing group tags, websites, and all symbols"""
+    """Save file in database after removing group tags, dynamic websites, and all symbols"""
 
     # TODO: Find better way to get same file_id for same media to avoid duplicates
     file_id, file_ref = unpack_new_file_id(media.file_id)
     
     raw_name = str(media.file_name).strip()
     
-    # 1. ✂️ REMOVE WEBSITES, TELEGRAM TAGS & BRACKETS FROM THE START (FIXED REGEX)
-    # ഡാഷ് ചിഹ്നം (\-) കൃത്യമായി എസ്‌കേപ്പ് ചെയ്തുകൊണ്ട് 'bad character range' എറർ പൂർണ്ണമായി പരിഹരിച്ചു
-    cleaned_start = re.sub(r'^(?:www\.[a-zA-Z0-9-]+\.[a-zA-Z]{2,6}(?:\.[a-zA-Z]{2,4})?|@[a-zA-Z0-9_]+|\[[^\]]+\]|\([^)]+\)|[\s🎬⭐🌟\-_+.\)]+)+', '', raw_name).strip()
+    # 1. ✂️ ADVANCED WEBSITES, TELEGRAM TAGS & BRACKETS REMOVAL (FROM THE START)
+    # www.1TamilMV.fun, www_1TamilMV_fun, www-1TamilMV-fun, @username, [tags] എന്നിവ തുടക്കത്തിൽ ഉണ്ടെങ്കിൽ പൂർണ്ണമായി നീക്കം ചെയ്യുന്നു
+    cleaned_start = re.sub(r'^(?:www[\._\-][a-zA-Z0-9\._\-]+\.[a-zA-Z]{2,6}(?:\.[a-zA-Z]{2,4})?|www[\._\-]1TamilMV[\._\-][a-zA-Z0-9]+|@[a-zA-Z0-9_]+|\[[^\]]+\]|\([^)]+\)|[\s🎬⭐🌟\-_+.\)]+)+', '', raw_name).strip()
     
     # 2. ✂️ REMOVE ALL REMAINING SYMBOLS
     # ബാക്കിയുള്ള ചിഹ്നങ്ങൾ (English & Malayalam അക്ഷരങ്ങളും അക്കങ്ങളും ഒഴികെ) മാറ്റി സ്പേസ് ആക്കുന്നു
@@ -118,15 +118,15 @@ async def save_file(media):
             return True, 1
 
 async def save_filea(media):
-    """Save file in database after removing group tags, websites, and all symbols"""
+    """Save file in database after removing group tags, dynamic websites, and all symbols"""
 
     # TODO: Find better way to get same file_id for same media to avoid duplicates
     file_id, file_ref = unpack_new_file_id(media.file_id)
     
     raw_name = str(media.file_name).strip()
     
-    # 1. ✂️ REMOVE WEBSITES, TELEGRAM TAGS & BRACKETS FROM THE START (FIXED REGEX)
-    cleaned_start = re.sub(r'^(?:www\.[a-zA-Z0-9-]+\.[a-zA-Z]{2,6}(?:\.[a-zA-Z]{2,4})?|@[a-zA-Z0-9_]+|\[[^\]]+\]|\([^)]+\)|[\s🎬⭐🌟\-_+.\)]+)+', '', raw_name).strip()
+    # 1. ✂️ ADVANCED WEBSITES, TELEGRAM TAGS & BRACKETS REMOVAL (FROM THE START)
+    cleaned_start = re.sub(r'^(?:www[\._\-][a-zA-Z0-9\._\-]+\.[a-zA-Z]{2,6}(?:\.[a-zA-Z]{2,4})?|www[\._\-]1TamilMV[\._\-][a-zA-Z0-9]+|@[a-zA-Z0-9_]+|\[[^\]]+\]|\([^)]+\)|[\s🎬⭐🌟\-_+.\)]+)+', '', raw_name).strip()
     
     # 2. ✂️ REMOVE ALL REMAINING SYMBOLS
     cleaned_symbols = re.sub(r'[^a-zA-Z0-9\u0D00-\u0D7F\s]', ' ', cleaned_start)
