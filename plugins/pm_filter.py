@@ -895,49 +895,45 @@ async def auto_filter(client, msg, spoll=False):
                             print(f"Error in search logging: {log_error}")
                 # === CUSTOM CODE END ===
 
-                # സ്പെൽ ചെക്ക് ഓൺ ആണോ ഓഫ് ആണോ എന്ന് നോക്കാതെ നേരിട്ട് ഫങ്ഷൻ വർക്ക് ചെയ്യിക്കുന്നു
+                # സ്പെൽ ചെക്ക് ഫങ്ക്ഷൻ വർക്ക് ചെയ്യിക്കുന്നു
                 return await advantage_spell_chok(client, msg)
+            
             else:
-                return
-    else:
-        return
-else:
-    settings = await get_settings(msg.message.chat.id)      
-    message = msg.message.reply_to_message  # msg will be callback query
-    search, files, offset, total_results = spoll
-    pre = 'filep' if settings['file_secure'] else 'file'
+                settings = await get_settings(msg.message.chat.id)      
+                message = msg.message.reply_to_message  # msg will be callback query
+                search, files, offset, total_results = spoll
+                pre = 'filep' if settings['file_secure'] else 'file'
 
-    btn = []
-    for file in files:
-        # ✂️ BUTTON TEXT CLEANING LOGIC (ബട്ടണിലെ പേര് മാത്രം ക്ലീൻ ചെയ്യുന്നു)
-        display_name = file.file_name
-        # ഫയലിന്റെ തുടക്കത്തിലുള്ള [MS], [ms], [any_tag], @channel ടാഗുകൾ, അനാവശ്യ ചിഹ്നങ്ങൾ എന്നിവ നീക്കം ചെയ്യുന്നു
-        display_name = re.sub(r'^(?:\[[^\]]+\]|\([^)]+\)|@[^\s]+|[\s🎬⭐🌟-_\.]+)+', '', display_name).strip()
-        
-        # ഒരുപക്ഷേ ക്ലീൻ ചെയ്ത ശേഷം പേര് ശൂന്യമായാൽ പഴയ പേര് തന്നെ നിലനിർത്തും (സുരക്ഷയ്ക്ക് വേണ്ടി)
-        if not display_name:
-            display_name = file.file_name
+                btn = []
+                for file in files:
+                    # ✂️ BUTTON TEXT CLEANING LOGIC (ബട്ടണിലെ പേര് മാത്രം ക്ലീൻ ചെയ്യുന്നു)
+                    display_name = file.file_name
+                    # ഫയലിന്റെ തുടക്കത്തിലുള്ള [MS], [ms], [any_tag] ടാഗുകൾ നീക്കം ചെയ്യുന്നു
+                    display_name = re.sub(r'^(?:\[[^\]]+\]|\([^)]+\)|@[^\s]+|[\s🎬⭐🌟-_\.]+)+', '', display_name).strip()
+                    
+                    if not display_name:
+                        display_name = file.file_name
 
-        if settings["button"]:
-            # Single Button ഫോർമാറ്റ് (ടാഗ് ഇല്ലാത്ത പേര് നൽകുന്നു)
-            btn.append([
-                InlineKeyboardButton(
-                    text=f"{get_size(file.file_size)}►{display_name}", 
-                    callback_data=f'{pre}#{file.file_id}'
-                ),
-            ])
-        else:
-            # Double Button ഫോർമാറ്റ് (ടാഗ് ഇല്ലാത്ത പേര് നൽകുന്നു)
-            btn.append([
-                InlineKeyboardButton(
-                    text=f"{display_name}",
-                    callback_data=f'{pre}#{file.file_id}',
-                ),
-                InlineKeyboardButton(
-                    text=f"{get_size(file.file_size)}",
-                    callback_data=f'{pre}#{file.file_id}',
-                ),
-            ])
+                    if settings["button"]:
+                        # Single Button ഫോർമാറ്റ്
+                        btn.append([
+                            InlineKeyboardButton(
+                                text=f"{get_size(file.file_size)}►{display_name}", 
+                                callback_data=f'{pre}#{file.file_id}'
+                            ),
+                        ])
+                    else:
+                        # Double Button ഫോർമാറ്റ്
+                        btn.append([
+                            InlineKeyboardButton(
+                                text=f"{display_name}",
+                                callback_data=f'{pre}#{file.file_id}',
+                            ),
+                            InlineKeyboardButton(
+                                text=f"{get_size(file.file_size)}",
+                                callback_data=f'{pre}#{file.file_id}',
+                            ),
+                        ])
 
     if offset != "":
         try:
