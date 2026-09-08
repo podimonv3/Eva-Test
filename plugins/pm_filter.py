@@ -846,7 +846,27 @@ async def auto_filter(client, msg, spoll=False):
                 return
 
             # 10. ഡാറ്റാബേസിൽ തിരയുന്നു
+                        # 10. ഡാറ്റാബേസിൽ തിരയുന്നു
             files, offset, total_results = await get_search_results(search, offset=0, filter=True)
+            
+            # 🔍 NEW EXACT MATCH SORTING LOGIC ADDED HERE
+            if files:
+                query_lower = search.lower()
+                
+                def sort_priority(file_obj):
+                    file_name_lower = file_obj.file_name.lower()
+                    # 1. സെർച്ച് ചെയ്ത വാക്ക് ഫയലിന്റെ പേരിന്റെ തുടക്കത്തിൽ തന്നെ ഉണ്ടെങ്കിൽ ഒന്നാം മുൻഗണന (0)
+                    if file_name_lower.startswith(query_lower):
+                        return 0
+                    # 2. ഫയലിന്റെ പേരിന്റെ എവിടെയെങ്കിലും കൃത്യമായി ആ വാക്ക് വേർതിരിഞ്ഞു നിൽക്കുന്നുണ്ടെങ്കിൽ രണ്ടാം മുൻഗണന (1)
+                    elif query_lower in file_name_lower:
+                        return 1
+                    # 3. മറ്റുള്ളവയ്ക്ക് കുറഞ്ഞ മുൻഗണന (2)
+                    return 2
+
+                # മുൻഗണനാ ക്രമത്തിൽ ലിസ്റ്റ് സോർട്ട് ചെയ്യുന്നു
+                files = sorted(files, key=sort_priority)
+
             if not files:
                 # === CUSTOM CODE: ഗ്രൂപ്പുകളിൽ നിന്നുള്ള കിട്ടാത്ത ഫയലുകൾ മാത്രം സേവ് ചെയ്യുന്നു ===
                 from pyrogram import enums
@@ -856,6 +876,7 @@ async def auto_filter(client, msg, spoll=False):
                         from database.ia_filterdb import db as clientDB
                         log_db = clientDB.search_logs
                         current_time = datetime.now()
+                        # (നിങ്ങളുടെ പഴയ കോഡിന്റെ ബാക്കി ഭാഗം ഇവിടെ തുടരും...)
 
                         # 24 മണിക്കൂർ കഴിഞ്ഞ പഴയ ലോഗുകൾ നീക്കം ചെയ്യുന്നു
                         time_limit = current_time - timedelta(hours=24)
