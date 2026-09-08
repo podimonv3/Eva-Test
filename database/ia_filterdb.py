@@ -70,18 +70,25 @@ async def check_file(media):
         return okda
         
 async def save_file(media):
-    """Save file in database after removing all symbols and cleaning spaces"""
+    """Save file in database after removing group tags, websites, and all symbols"""
 
     # TODO: Find better way to get same file_id for same media to avoid duplicates
     file_id, file_ref = unpack_new_file_id(media.file_id)
     
-    # ✂️ REMOVE ALL SYMBOLS LOGIC
-    # ഇംഗ്ലീഷ് (a-z, A-Z), മലയാളം (\u0D00-\u0D7F) അക്ഷരങ്ങളും അക്കങ്ങളും (0-9) ഒഴികെയുള്ള എല്ലാ ചിഹ്നങ്ങളും മാറ്റി സ്പേസ് ആക്കുന്നു
-    raw_name = str(media.file_name)
-    cleaned_name = re.sub(r'[^a-zA-Z0-9\u0D00-\u0D7F\s]', ' ', raw_name)
+    raw_name = str(media.file_name).strip()
     
+    # 1. ✂️ REMOVE WEBSITES, TELEGRAM TAGS & BRACKETS FROM THE START
+    # ഫയലിന്റെ തുടക്കത്തിൽ വരുന്ന www..., .rsvp, @username, [tags] എന്നിവ നീക്കം ചെയ്യുന്നു
+    # (flags=re.IGNORECASE ഉള്ളതുകൊണ്ട് Small/Capital അക്ഷരങ്ങൾ ഒരുപോലെ മാറും)
+    cleaned_start = re.sub(r'^(?:www\.[a-zA-Z0-9-]+\.[a-zA-Z]{2,6}(?:\.[a-zA-Z]{2,4})?|@[a-zA-Z0-9_]+|\[[^\]]+\]|\([^)]+\)|[\s🎬⭐🌟-_\.]+)+', '', raw_name).strip()
+    
+    # 2. ✂️ REMOVE ALL REMAINING SYMBOLS
+    # ബാക്കിയുള്ള ചിഹ്നങ്ങൾ (English & Malayalam അക്ഷരങ്ങളും അക്കങ്ങളും ഒഴികെ) മാറ്റി സ്പേസ് ആക്കുന്നു
+    cleaned_symbols = re.sub(r'[^a-zA-Z0-9\u0D00-\u0D7F\s]', ' ', cleaned_start)
+    
+    # 3. 🧼 CLEAN DOUBLE SPACES
     # ചിഹ്നങ്ങൾ മാറുമ്പോൾ ഉണ്ടാകുന്ന ഇരട്ട സ്പേസുകൾ ഒഴിവാക്കി ഒരൊറ്റ സ്പേസ് ആക്കുന്നു
-    file_name = re.sub(r'\s+', ' ', cleaned_name).strip()
+    file_name = re.sub(r'\s+', ' ', cleaned_symbols).strip()
     
     if not file_name:
         file_name = raw_name
@@ -106,25 +113,27 @@ async def save_file(media):
             logger.warning(
                 f'{getattr(media, "file_name", "NO_FILE")} is already saved in database'
             )
-
             return False, 0
         else:
             logger.info(f'{file_name} is saved to database')
             return True, 1
 
 async def save_filea(media):
-    """Save file in database after removing all symbols and cleaning spaces"""
+    """Save file in database after removing group tags, websites, and all symbols"""
 
     # TODO: Find better way to get same file_id for same media to avoid duplicates
     file_id, file_ref = unpack_new_file_id(media.file_id)
     
-    # ✂️ REMOVE ALL SYMBOLS LOGIC
-    # ഇംഗ്ലീഷ് (a-z, A-Z), മലയാളം (\u0D00-\u0D7F) അക്ഷരങ്ങളും അക്കങ്ങളും (0-9) ഒഴികെയുള്ള എല്ലാ ചിഹ്നങ്ങളും മാറ്റി സ്പേസ് ആക്കുന്നു
-    raw_name = str(media.file_name)
-    cleaned_name = re.sub(r'[^a-zA-Z0-9\u0D00-\u0D7F\s]', ' ', raw_name)
+    raw_name = str(media.file_name).strip()
     
-    # ചിഹ്നങ്ങൾ മാറുമ്പോൾ ഉണ്ടാകുന്ന ഇരട്ട സ്പേസുകൾ ഒഴിവാക്കി ഒരൊറ്റ സ്പേസ് ആക്കുന്നു
-    file_name = re.sub(r'\s+', ' ', cleaned_name).strip()
+    # 1. ✂️ REMOVE WEBSITES, TELEGRAM TAGS & BRACKETS FROM THE START
+    cleaned_start = re.sub(r'^(?:www\.[a-zA-Z0-9-]+\.[a-zA-Z]{2,6}(?:\.[a-zA-Z]{2,4})?|@[a-zA-Z0-9_]+|\[[^\]]+\]|\([^)]+\)|[\s🎬⭐🌟-_\.]+)+', '', raw_name).strip()
+    
+    # 2. ✂️ REMOVE ALL REMAINING SYMBOLS
+    cleaned_symbols = re.sub(r'[^a-zA-Z0-9\u0D00-\u0D7F\s]', ' ', cleaned_start)
+    
+    # 3. 🧼 CLEAN DOUBLE SPACES
+    file_name = re.sub(r'\s+', ' ', cleaned_symbols).strip()
     
     if not file_name:
         file_name = raw_name
@@ -149,7 +158,6 @@ async def save_filea(media):
             logger.warning(
                 f'{getattr(media, "file_name", "NO_FILE")} is already saved in database'
             )
-
             return False, 0
         else:
             logger.info(f'{file_name} is saved to database')
