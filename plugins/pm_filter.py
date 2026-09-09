@@ -1040,7 +1040,7 @@ async def global_filters(client, message, text=False):
                                 disable_web_page_preview=True,
                                 reply_to_message_id=reply_id
                             )
-                            await asyncio.sleep(120)
+                            await asyncio.sleep(300)
                             await knd3.delete()                           
 
                         else:
@@ -1052,7 +1052,7 @@ async def global_filters(client, message, text=False):
                                 reply_markup=InlineKeyboardMarkup(button),
                                 reply_to_message_id=reply_id
                             )
-                            await asyncio.sleep(120)
+                            await asyncio.sleep(300)
                             await knd2.delete()                    
 
                     elif btn == "[]":
@@ -1062,7 +1062,7 @@ async def global_filters(client, message, text=False):
                             caption=reply_text or "",
                             reply_to_message_id=reply_id
                         )
-                        await asyncio.sleep(120)
+                        await asyncio.sleep(300)
                         await knd1.delete()                        
 
                     else:
@@ -1073,7 +1073,7 @@ async def global_filters(client, message, text=False):
                             reply_markup=InlineKeyboardMarkup(button),
                             reply_to_message_id=reply_id
                         )
-                        await asyncio.sleep(120)
+                        await asyncio.sleep(300)
                         await knd.delete()
                         
                 except Exception as e:
