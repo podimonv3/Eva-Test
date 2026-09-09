@@ -104,5 +104,17 @@ CUSTOM_TAGS = [
     "[MR]", "@MalluRockers", "@KBO", "[KBO]", "@KeralaBoxOffice", 
     "@TamilRockers", "[TR]", "@TR_Updates", "@Linkz_MM", "@MM_Movies", 
     "@Cinema_Kottaka", "@Movie_Hub", "@M_Zone", "[M-Zone]", "MZone", 
-    "@DvdWap", "://dvdwap.com", "www.", "KC_"
+    "@DvdWap", "://dvdwap.com", "www.", "KC_", "@TN60_LinkzZ", "[FFH]", 
+    "[GKL]", "@DramaOST", "@FBM_New", "[Anylink Movies]", "[TS]", "@TR_Moviez", 
+    "@FilmCage", "@Hk", "[@HK]", "@MCArchives", "@TamilMV_Live", "@HEVCHubX", 
+    "@MM_OLD", "[SeriesLand4U]", "@OB", "@MC_4U", "[HK] Join @ғanѕzz", 
+    "[YDF HD]", "[YDF]", "[@TVseriesLand]", "@MSPmoviesOffl", "@Theprofffesorr", 
+    "@kickass_torrents", "@Tamil_LinkzZ", "NewRelease", "@MOVIEZMOB", "[DFBC]", 
+    "@E4E_Rockers", "@iMediaShare", "[Movie Bazar]", "[MFA]", "@HEVC_Moviesz",
+    "@mobile_mm", "@Tamil_HD_Movies_Requests", "[MC_Moviecentral]", "KC", 
+    "@KW", "@DVDWOALL", "@CMEHD", "@KR", "@Cinematic_world", "@moviescollection17", 
+    "[CT™]", "@Dubbedmovies", "@lubokvideo", "@myflixx", "@Sky_MoviesHD", 
+    "@SY_MS", "@MJ_Moviez", "@Qualitymovies", "@PIT", "@Links2U", "@IM", 
+    "@FrediesChannel", "@AM", "[PFM]", "@nanacinemas", "@C_V", "@CVM", 
+    "[ᎡᴛᏴᴛ]", "@FBM_ALL", "@CineMallu_Linkz"
 ]
