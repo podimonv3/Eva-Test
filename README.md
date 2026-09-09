@@ -1,6 +1,6 @@
 # 🤖 Eva-Test Telegram Bot
 
-![Eva Bot Banner](Mine%20Project.png)
+![Eva Bot Banner](database/Mine%20Project.png)
 
 A clean and optimized Python Telegram bot repository, fully configured for seamless deployment on the Koyeb platform.
 
