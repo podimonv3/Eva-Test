@@ -80,11 +80,29 @@ Name - {}
 
 
 
-# 🚫 ഒഴിവാക്കേണ്ട പരസ്യങ്ങൾ അവയുടെ ഒറിജിനൽ രൂപത്തിൽ ചിഹ്നങ്ങളോടെ ഇവിടെ നൽകാം
 CUSTOM_TAGS = [
-    "[MS]", 
-    "@msp",
-    "@HEVC_Cinemaz",
-    "www.1TamilMV.fun",
-    "www_1TamilMV_fun"
+    "[MS]", "[MM]", "@MC", "[MC]", "[WC]", "@IM", "[BO]", "@WMR", 
+    "@RickyChannel", "@CC", "@CC_NEW", "@x265 E4E", "@KGRockers", 
+    "[MoviesNowTamil]", "[CKM]", "[F&T]", "@Mc_South", "[KML]", 
+    "@Rarefilms", "A2MOVIES", "MLM", "@Tv2Us", "@MM_Linkz", "[PM]", 
+    "@desimovies Telegram", "[PS]", "@KD_Deck", "@FBM", "@FBM_Dubbed", 
+    "@DMovies", "[KMH]", "[DnO]", "@film_down_load", "[Dn0]", "[MF]", 
+    "MF", "www_1TamilMV", "www.1TamilMV", "@msp", "@HEVC_Cinemaz", 
+    "www.1TamilMV.fun", "www_1TamilMV_fun", "@WorldCinemaToday", "[CK]", 
+    "[MABLG]", "@CC_All", "[KC]", "@ADrama_Lovers", "@Team_HDT", 
+    "@TV 30NAMA1", "[EC]", "@TvSeriesBay", "@Cinema Company", "@Cinema_Company", 
+    "@CC_", "@MM_New", "@MOVIEHUNT", "@CL", "@CKMSERIES", "www_DVDWap_Com_", 
+    "[CF] ", "[CF]", "@IndianMoviez", "@tamil_mm", "@infotainmentmedia", 
+    "@trolldcompany", "@yamandanmovies", "[YM]", "@Mallu_Movies", "@YTSLT", 
+    "@DailyMovieZhunt", "@I_M_D_B", "@PM_Old", "Dvdworld", "@FBM_HW", 
+    "@Film_Kottaka", "@CC_X265", "@CelluloidCineClub", "@cinemaheist", 
+    "@telugu_moviez", "@CR_Rockers", "@CCineClub", "[AML]", "[@MOVIES HUNT]", 
+    "@MoviezzClub", "[CT™️]", "@FILIMHOUSE", "MoviezzClub", "@MaasFile", 
+    "@CKMovies", "@KannadaWarriors", "@TG UPDATES1", "@UCDump", "@favio", 
+    "@MovieWorld2000", "@RatedRMovies", "@moviesdeveloper", "@MoviesWar", "@AVA",
+    "@TamilMV", "www.1TamilMV.org", "www.1TamilMV.me", "@Mallu_Rockers", 
+    "[MR]", "@MalluRockers", "@KBO", "[KBO]", "@KeralaBoxOffice", 
+    "@TamilRockers", "[TR]", "@TR_Updates", "@Linkz_MM", "@MM_Movies", 
+    "@Cinema_Kottaka", "@Movie_Hub", "@M_Zone", "[M-Zone]", "MZone", 
+    "@DvdWap", "://dvdwap.com", "www.", "KC_"
 ]
