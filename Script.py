@@ -81,9 +81,9 @@ Name - {}
 
 
 CUSTOM_TAGS = [
-    "[MS]", "[MM]", "@MC", "[MC]", "[WC]", "@IM", "[BO]", "@WMR", 
-    "@RickyChannel", "@CC", "@CC_NEW", "@x265 E4E", "@KGRockers", 
-    "[MoviesNowTamil]", "[CKM]", "[F&T]", "@Mc_South", "[KML]", 
+    "[MS]", "[MM]", "@MC", "[MC]", "[WC]", "@IM", "[BO]", "[@UnratedHD]", "@WMR", 
+    "@RickyChannel", "@CC", "@CC_NEW", "@x265 E4E", "@KGRockers", "@mobile mm",
+    "[MoviesNowTamil]", "[CKM]", "[F&T]", "@Mc_South", "[KML]", "@cinemaa company",
     "@Rarefilms", "A2MOVIES", "MLM", "@Tv2Us", "@MM_Linkz", "[PM]", 
     "@desimovies Telegram", "[PS]", "@KD_Deck", "@FBM", "@FBM_Dubbed", 
     "@DMovies", "[KMH]", "[DnO]", "@film_down_load", "[Dn0]", "[MF]", 
