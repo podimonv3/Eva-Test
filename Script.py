@@ -116,5 +116,5 @@ CUSTOM_TAGS = [
     "[CT™]", "@Dubbedmovies", "@lubokvideo", "@myflixx", "@Sky_MoviesHD", 
     "@SY_MS", "@MJ_Moviez", "@Qualitymovies", "@PIT", "@Links2U", "@IM", 
     "@FrediesChannel", "@AM", "[PFM]", "@nanacinemas", "@C_V", "@CVM", 
-    "[ᎡᴛᏴᴛ]", "@FBM_ALL", "@CineMallu_Linkz"
+    "[ᎡᴛᏴᴛ]", "@FBM_ALL", "[MCU]", "@CineMallu_Linkz"
 ]
