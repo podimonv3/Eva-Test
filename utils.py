@@ -155,7 +155,7 @@ async def save_group_settings(group_id, key, value):
     await db.update_settings(group_id, current)
     
 def get_size(size):
-    """Get size in readable integer format with superscript units (No Space)"""
+    """Get size in readable integer format with full superscript styling"""
     units = ["Bytes", "ᴷᴮ", "ᴹᴮ", "ᴳᴮ", "ᵀᴮ", "ᴾᴮ", "ᴱᴮ"]
     size = float(size)
     i = 0
@@ -163,13 +163,18 @@ def get_size(size):
         i += 1
         size /= 1024.0
         
-    raw_size_int = int(size)
+    raw_size_str = str(int(size))
     
-    return f"{raw_size_int}{units[i]}"
-
-def split_list(l, n):
-    for i in range(0, len(l), n):
-        yield l[i:i + n]  
+    # Mapping table to convert normal numbers to superscript numbers
+    superscript_map = {
+        '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+        '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹'
+    }
+    
+    su_size_str = "".join(superscript_map.get(char, char) for char in raw_size_str)
+    
+    return f"{su_size_str}{units[i]}"
+  
 
 def get_file_id(msg: Message):
     if msg.media:
