@@ -6,7 +6,7 @@ import requests
 import asyncio
 from Script import script
 from pyrogram import Client, filters, enums
-from pyrogram.errors import ChatAdminRequired, FloodWait, MessageDeleteForbidden
+from pyrogram.errors import ChatAdminRequired, FloodWait, MessageDeleteForbidden, UserIsBlocked
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 from asyncio import sleep
 from pyrogram.enums import ChatType
@@ -146,22 +146,36 @@ async def start(client, message):
                 btn.append([InlineKeyboardButton("🔃 ᴛʀʏ ᴀɢᴀɪɴ 🔃", callback_data=f"{pre}#{file_id}")])
             except (IndexError, ValueError):
                 btn.append([InlineKeyboardButton("🔃 ᴛʀʏ ᴀɢᴀɪɴ 🔃", url=f"https://t.me/{temp.U_NAME}?start={message.command[1]}")])
-        sh = await client.send_message(
-            chat_id=message.from_user.id,
-            text=script.JOIN_TXT,
-            reply_markup=InlineKeyboardMarkup(btn),
-            parse_mode=enums.ParseMode.MARKDOWN
+        
+        # തിരുത്തിയ ഭാഗം ഇവിടെ തുടങ്ങുന്നു 👇
+        try:
+            sh = await client.send_message(
+                chat_id=message.from_user.id,
+                text=script.JOIN_TXT,
+                reply_markup=InlineKeyboardMarkup(btn),
+                parse_mode=enums.ParseMode.MARKDOWN
             )
-        if should_run_check_loop_sub:
-            check = await check_loop_sub(client, message)
-        elif should_run_check_loop_sub1:
-            check = await check_loop_sub1(client, message)
-        if check:     
-            await send_file(client, message, pre, file_id)
-            await sh.delete()        
-            return
-        else:
+            
+            if should_run_check_loop_sub:
+                check = await check_loop_sub(client, message)
+            elif should_run_check_loop_sub1:
+                check = await check_loop_sub1(client, message)
+                
+            if check:     
+                await send_file(client, message, pre, file_id)
+                await sh.delete()        
+                return
+            else:
+                return False
+                
+        except UserIsBlocked:
+            print(f"യൂസർ {message.from_user.id} ബോട്ടിനെ ബ്ലോക്ക് ചെയ്തിരിക്കുന്നു. Join മെസ്സേജ് അയക്കാൻ കഴിഞ്ഞില്ല.")
             return False
+            
+        except Exception as e:
+            print(f"Error in start send_message: {e}")
+            return False
+
 
     if REQ_CHANNEL2 and not await is_requested_two(client, message):
         btn = [[
