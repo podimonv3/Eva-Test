@@ -79,14 +79,13 @@ Name - {}
         
 
 
-
 CUSTOM_TAGS = [
-    "[MS]", "[MM]", "@MC", "[MC]", "[WC]", "@IM", "[BO]", "[@UnratedHD]", "@WMR", 
-    "@RickyChannel", "@CC", "@CC_NEW", "@x265 E4E", "@KGRockers", "@mobile mm",
+    "[Sree]", "[MS]", "[MM]", "@MC", "[MC]", "[WC]", "@IM", "[BO]", "[@UnratedHD]", "@WMR", "@RMK OLD", "[CoMovie]", "@Theprofffesorr",
+    "@RickyChannel", "@CC", "@CC_NEW", "@x265 E4E", "@KGRockers", "@mobile mm", "Join @Desiflix1", "@DesiHdFlix",
     "[MoviesNowTamil]", "[CKM]", "[F&T]", "@Mc_South", "[KML]", "@cinemaa company",
-    "@Rarefilms", "A2MOVIES", "MLM", "@Tv2Us", "@MM_Linkz", "[PM]", 
-    "@desimovies Telegram", "[PS]", "@KD_Deck", "@FBM", "@FBM_Dubbed", 
-    "@DMovies", "[KMH]", "[DnO]", "@film_down_load", "[Dn0]", "[MF]", 
+    "@Rarefilms", "A2MOVIES", "MLM", "@Tv2Us", "@MM_Linkz", "[PM]", "[ @Eliteflix Official ]",
+    "@desimovies Telegram", "[PS]", "@KD_Deck", "@FBM", "@FBM_Dubbed", "@Hdnewtamilmovies4K",
+    "@DMovies", "[KMH]", "[DnO]", "@film_down_load", "[Dn0]", "[MF]", "MF", 
     "MF", "www_1TamilMV", "www.1TamilMV", "@msp", "@HEVC_Cinemaz", 
     "www.1TamilMV.fun", "www_1TamilMV_fun", "@WorldCinemaToday", "[CK]", 
     "[MABLG]", "@CC_All", "[KC]", "@ADrama_Lovers", "@Team_HDT", 
@@ -116,5 +115,7 @@ CUSTOM_TAGS = [
     "[CT™]", "@Dubbedmovies", "@lubokvideo", "@myflixx", "@Sky_MoviesHD", 
     "@SY_MS", "@MJ_Moviez", "@Qualitymovies", "@PIT", "@Links2U", "@IM", 
     "@FrediesChannel", "@AM", "[PFM]", "@nanacinemas", "@C_V", "@CVM", 
-    "[ᎡᴛᏴᴛ]", "@FBM_ALL", "[MCU]", "@CineMallu_Linkz"
+    "[ᎡᴛᏴᴛ]", "@FBM_ALL", "[MCU]", "@CineMallu_Linkz", "@FBM", "𝙼𝚁✘", "@TBPIndex"
 ]
+
+
