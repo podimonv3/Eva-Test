@@ -1,7 +1,7 @@
 import re
 import logging
 from pyrogram import Client, filters
-from info import DELETE_CHANNELS, LOG_CHANNEL  # LOG_CHANNEL ഇവിടെ ഇമ്പോർട്ട് ചെയ്യുക
+from info import DELETE_CHANNELS, LOG_CHANNEL  
 from database.ia_filterdb import Media, unpack_new_file_id
 
 logger = logging.getLogger(__name__)
