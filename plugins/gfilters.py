@@ -6,7 +6,8 @@ import io
 from info import ADMINS
 from pyrogram import filters, Client, enums
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from database.gfilters_mdb import add_gfilter, get_gfilters, delete_gfilter, count_gfilters
+# 1. ഇവിടെ del_allg കൂടി ഇമ്പോർട്ട് ചെയ്തു
+from database.gfilters_mdb import add_gfilter, get_gfilters, delete_gfilter, count_gfilters, del_allg
 from database.connections_mdb import active_connection
 from utils import get_file_id, gfilterparser, split_quotes
 
@@ -18,7 +19,7 @@ async def addgfilter(client, message):
         await message.reply_text("Command Incomplete :(", quote=True)
         return
 
-    extracted = split_quotes(args[1])
+    extracted = split_quotes(args[1]) # ഇവിടെ args[1] എന്ന് തന്നെ കൃത്യമാക്കി
     text = extracted[0].lower()
 
     if not message.reply_to_message and len(extracted) < 2:
@@ -130,13 +131,20 @@ async def delallgfilters(client, message):
     await message.reply_text(
             f"Do you want to continue??",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(text="YES",callback_data="gfiltersdeleteallconfirm")],
-                [InlineKeyboardButton(text="CANCEL",callback_data="gfiltersdeleteallcancel")]
+                [InlineKeyboardButton(text="YES", callback_data="gfiltersdeleteallconfirm")],
+                [InlineKeyboardButton(text="CANCEL", callback_data="gfiltersdeleteallcancel")]
             ]),
             quote=True
         )
-@Client.on_callback_query(filters.regex("gconforme"))
-async def dellacbd(client, message):
-    await del_allg(message.message, 'gfilters')
-    return await message.reply("👍 Done")
-    
+
+# 2. ബട്ടണിലെ callback_data മാച്ച് ചെയ്യാൻ ഇവിടെ രണ്ട് പുതിയ ഫങ്ഷനുകൾ ചേർത്തു
+@Client.on_callback_query(filters.regex("^gfiltersdeleteallconfirm$"))
+async def dellacbd(client, query):
+    await del_allg(query.message, 'gfilters')
+    await query.answer("All Global Filters Deleted! 👍")
+
+@Client.on_callback_query(filters.regex("^gfiltersdeleteallcancel$"))
+async def cancel_delall(client, query):
+    await query.answer("Action Cancelled!")
+    await query.message.edit_text("Process Cancelled. ❌")
+
