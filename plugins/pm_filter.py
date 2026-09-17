@@ -791,14 +791,15 @@ async def cb_handler(client: Client, query: CallbackQuery):
     await query.answer('Piracy Is Crime')
 
 
+
+
 async def auto_filter(client, msg, spoll=False):
     if not spoll:
         message = msg
         settings = await get_settings(message.chat.id)
         
-        # 0. ടെക്സ്റ്റ് മെസ്സേജ് ആണെന്ന് ഉറപ്പാക്കുന്നു (മീഡിയ ഫയലുകൾ വന്നാൽ ക്രാഷ് ആകില്ല)
         if not message.text or message.text.startswith("/"): 
-            return  # ignore commands
+            return  
             
         if re.findall(r"((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", message.text):
             return
@@ -806,27 +807,17 @@ async def auto_filter(client, msg, spoll=False):
         if 0 < len(message.text) < 100:
             search = message.text.lower()                       
 
-            # 1. കണ്ണിൽ കാണാത്ത എല്ലാ  ഹിഡൻ യുണികോഡ് ക്യാരക്റ്ററുകളും നീക്കം ചെയ്യുന്നു
             search = re.sub(r'[\u200b\u200c\u200d\ufeff\u200e\u200f]', '', search)
-            
-            # 2. നോൺ-ബ്രേക്കിംഗ് സ്പേസുകൾ ഉൾപ്പെടെയുള്ള എല്ലാ പ്രത്യേക സ്പേസുകളെയും സാധാരണ സ്പേസ് ആക്കുന്നു
             search = re.sub(r'[\s\u00a0\u2000-\u200a\u202f\u205f\u3000]+', ' ', search)
-            
-            # 3. അപ്പോസ്ട്രോഫിയും വളഞ്ഞ സിംഗിൾ കോമകളും പൂർണ്ണമായി നീക്കം ചെയ്യുന്നു (Newton's -> Newtons)
             search = re.sub(r"['‘’]", "", search)
             
-            # 4. അക്കങ്ങൾ വേർതിരിക്കുന്നു (kgf2 -> kgf 2, പക്ഷെ 3rd, 2nd, 1st എന്നിവ മാറ്റില്ല)
             if not re.search(r"\b\d+(st|nd|rd|th)\b", search, re.IGNORECASE):
                 search = re.sub(r"([a-zA-Z]+)([0-9]+)", r"\1 \2", search)
                 search = re.sub(r"([0-9]+)([a-zA-Z]+)", r"\1 \2", search)
                                     
-            # 5. ബാക്കി ചിഹ്നങ്ങളും ബ്രാക്കറ്റുകളും മാറ്റി സ്പേസ് ആക്കുന്നു
             search = re.sub(r"[-–—_,#&?/( )\[\]\\\":\.¡%“”]", " ", search)
-                    
-            # 6. ഒട്ടിനിൽക്കുന്ന സിനിമ വാക്കുകൾ മാറ്റുന്നു (\b ചേർത്തതു കൊണ്ട് വാക്ക് പൂർണ്ണമാണെങ്കിൽ മാത്രമേ മാറൂ)
             search = re.sub(r"\b(movie(s)?|hd|full|print|file)\b", "", search, flags=re.IGNORECASE)                       
                                    
-            # 7 & 8. [വേഗത കൂട്ടിയ ഭാഗം] വലിയ ലൂപ്പും വലിയ Regex-ും ഒഴിവാക്കി, ഒരൊറ്റ സെറ്റ് (Set) വഴി വാക്കുകൾ ফിൽട്ടർ ചെയ്യുന്നു
             find = search.split(" ")
             removes = {
                 "pls", "plz", "please", "send", "snd", 
@@ -837,19 +828,14 @@ async def auto_filter(client, msg, spoll=False):
                 "anupungga", "subtile", "kitti", "kitty", "tharu", "kittumo", "kittum"              
             }
             search = " ".join([w for w in find if w not in removes])
-            
-            # 9. അനാവശ്യ സ്പേസുകൾ കളയുന്നു
             search = re.sub(r"\s+", " ", search).strip()                                                
             
-            # ഫിൽട്ടറിംഗിന് ശേഷം വാക്കുകൾ ഒന്നും ബാക്കിയില്ലെങ്കിൽ ഡാറ്റാബേസ് സെർച്ച് ഒഴിവാക്കുന്നു
             if not search:
                 return
 
-            # 10. ഡാറ്റാബേസിൽ തിരയുന്നു (ഇത് ഇപ്പോൾ ia_filterdb.py വഴി തനിയെ സോർട്ട് ചെയ്ത് വരും)
             files, offset, total_results = await get_search_results(search, offset=0, filter=True)
 
             if not files:
-                # === CUSTOM CODE: ഗ്രൂപ്പുകളിൽ നിന്നുള്ള കിട്ടാത്ത ഫയലുകൾ മാത്രം സേവ് ചെയ്യുന്നു ===
                 from pyrogram import enums
                 if message.chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]:
                     try:
@@ -858,24 +844,18 @@ async def auto_filter(client, msg, spoll=False):
                         log_db = clientDB.search_logs
                         current_time = datetime.now()
 
-                        # (നിങ്ങളുടെ പഴയ കോഡിന്റെ ബാക്കി ഭാഗം ഇവിടെ തുടരും...)
-
-                        # 24 മണിക്കൂർ കഴിഞ്ഞ പഴയ ലോഗുകൾ നീക്കം ചെയ്യുന്നു
                         time_limit = current_time - timedelta(hours=24)
                         await log_db.delete_many({"timestamp": {"$lt": time_limit}})
 
-                        # വാക്ക് നിലവിലുണ്ടോ എന്ന് നോക്കുന്നു (Case-insensitive)
                         search_query_lower = search.lower()
                         existing = await log_db.find_one({"word_lower": search_query_lower})
 
                         if existing:
-                            # കൗണ്ട് 1 കൂട്ടുന്നു
                             await log_db.update_one(
                                 {"_id": existing["_id"]},
                                 {"$inc": {"count": 1}, "$set": {"timestamp": current_time}}
                             )
                         else:
-                            # പുതുതായി ഡാറ്റാബേസിലേക്ക് ചേർക്കുന്നു
                             await log_db.insert_one({
                                 "word": search,
                                 "word_lower": search_query_lower,
@@ -887,19 +867,16 @@ async def auto_filter(client, msg, spoll=False):
                             logger.error(f"Error in search logging: {log_error}")
                         else:
                             print(f"Error in search logging: {log_error}")
-                # === CUSTOM CODE END ===
-
-                # സ്പെൽ ചെക്ക് ഓൺ ആണോ ഓഫ് ആണോ എന്ന് നോക്കാതെ നേരിട്ട് ഫങ്ഷൻ വർക്ക് ചെയ്യിക്കുന്നു
-                return await advantage_spell_chok(client, msg)
+                return
         else:
             return
     else:
         settings = await get_settings(msg.message.chat.id)      
-        message = msg.message.reply_to_message  # msg will be callback query
+        message = msg.message.reply_to_message  
         search, files, offset, total_results = spoll
+        
     pre = 'filep' if settings['file_secure'] else 'file'
     if settings["button"]:
-        # ഇതിന് താഴോട്ട് നിങ്ങളുടെ ഫയലിലുള്ള ബാക്കി കോഡ് (ബട്ടണുകൾ നിർമ്മിക്കുന്ന ഭാഗം) അതുപോലെ തന്നെ വെക്കുക.
         btn = [
             [
                 InlineKeyboardButton(
@@ -933,7 +910,7 @@ async def auto_filter(client, msg, spoll=False):
     
     if offset == 0:
         btn.append(
-            [InlineKeyboardButton(text="🍃 ഉർവശി തീയറ്റേഴ്‌സ് 🍃", url="https://t.me/+eb__Eg3RS2IyZWQ1")]
+            [InlineKeyboardButton(text="🍃 ഉർവശി തീയറ്റേഴ്‌സ് 🍃", url="https://t.me")]
         )
     else:
         key = f"{message.chat.id}-{message.id}"
@@ -944,15 +921,12 @@ async def auto_filter(client, msg, spoll=False):
             InlineKeyboardButton(text="Nᴇxᴛ ⤷", callback_data=f"next_{req}_{key}_{offset}")]
         )
         
-    # IMDb പൂർണ്ണമായും ഒഴിവാക്കി, നേരിട്ട് സാധാരണ ടെക്സ്റ്റ് ക്യാപ്ഷൻ സെറ്റ് ചെയ്യുന്നു
     cap = f"<b><i><blockquote>►Film : {search}\n►Rating : {random.choice(RATING)}\n►Genre : {random.choice(GENRES)}</i></blockquote></b>\n<b><i>©𝐓𝐞𝐚𝐦 𝐔𝐫𝐯𝐚𝐬𝐡𝐢 𝐓𝐡𝐞𝐚𝐭𝐞𝐫𝐬™️</i></b>"         
-    
-    # ഫയലുകളുടെ ബട്ടണുകളോടൊപ്പം മെസ്സേജ് ഗ്രൂപ്പിലേക്ക് അയക്കുന്നു
     fmsg = await message.reply_text(cap, reply_markup=InlineKeyboardMarkup(btn))
        
     await asyncio.sleep(300)
     await fmsg.delete()
-        
+
 
 
 # യൂസർ 'Close 🚫' ബട്ടൺ ക്ലിക്ക് ചെയ്യുമ്പോൾ ബോട്ടിന്റെ മെസ്സേജ് മാത്രം ഡിലീറ്റ് ചെയ്യും
@@ -963,57 +937,6 @@ async def close_callback_handler(client, query: CallbackQuery):
         await query.message.delete()
     except Exception as e:
         logger.error(f"Error in close button callback: {e}")
-
-
-
-async def advantage_spell_chok(client, msg):
-    mv_id = msg.id
-    mv_rqst = msg.text    
-    
-    # 1. മെസ്സേജിലെ ആവശ്യമില്ലാത്ത വാക്കുകൾ ഒഴിവാക്കുന്നു
-    query = re.sub(
-        r"\b(pl(i|e)*?(s|z+|ease|se|ese|(e+)s(e)?)|((send|snd|giv(e)?|gib)(\sme)?)|movie(s)?|new|latest|br((o|u)h?)*|^h(e|a)?(l)*(o)*|mal(ayalam)?|t(h)?amil|file|that|find|und(o)*|kit(t(i|y)?)?o(w)?|thar(u)?(o)*w?|kittum(o)*|aya(k)*(um(o)*)?|full\smovie|any(one)|with\ssubtitle(s)?)",
-        "", mv_rqst, flags=re.IGNORECASE
-    )    
-    clean_title = query.strip()
-    
-    # ഡാറ്റാബേസ് സെർച്ചിങ് പൂർണ്ണമായി ഒഴിവാക്കാൻ സിനിമകൾ ഇല്ല (None) എന്ന് നേരിട്ട് ഉറപ്പിക്കുന്നു
-    movies = None        
-    
-    # ----------------------------------------------------
-    # സിനിമ ഇല്ലെങ്കിൽ നേരിട്ട് (Direct Reply) പുതിയ ബട്ടണുകൾ നൽകുന്നു
-    # ----------------------------------------------------
-    if not movies:
-        encoded_title = urllib.parse.quote_plus(clean_title)
-        
-        # നിങ്ങൾ ആവശ്യപ്പെട്ട 5 ബട്ടണുകൾ ഇവിടെ കൃത്യമായി ക്രമീകരിച്ചിരിക്കുന്നു
-        button = [
-            [
-                InlineKeyboardButton('🔍 sᴇᴀʀᴄʜ ᴏɴ ɢᴏᴏɢʟᴇ 🔎', url=f"https://www.google.com/search?q={encoded_title}")
-            ],
-            [
-                InlineKeyboardButton('🎬 IMDb Search', url=f"https://imdb.com/find?q={encoded_title}"),
-                InlineKeyboardButton('🎥 TMDb Search', url=f"https://themoviedb.org/search?query={encoded_title}")
-            ],
-            [         
-                InlineKeyboardButton('🗣️ RequestAdmin', url="http://t.me/Promoviesearcherbot"), # ഇവിടെ നിങ്ങളുടെ മെയിൻ ചാനൽ ലിങ്ക് നൽകാം
-                InlineKeyboardButton('🚫 Close', callback_data='close_data')
-            ]
-        ]        
-        
-        k = await msg.reply_text(
-            text=script.MOVREQ_TXT,
-            reply_markup=InlineKeyboardMarkup(button),
-            reply_to_message_id=mv_id
-        )
-        
-        # 60 സെക്കന്റിന് ശേഷം മെസ്സേജ് തനിയെ ഡിലീറ്റ് ചെയ്യും
-        await asyncio.sleep(60)
-        try:
-            await k.delete()
-        except Exception:
-            pass
-        return
 
 
 
