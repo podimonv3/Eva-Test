@@ -117,7 +117,15 @@ async def is_subscribed(bot, query):
             return True
 
     return False
- 
+
+
+def get_progress_bar(completed, total, length=10):
+    progress = completed / total
+    block = int(round(length * progress))
+    # 🟩 ചിഹ്നവും ⬜ ചിഹ്നവും ഉപയോഗിച്ച് ബാർ ഉണ്ടാക്കുന്നു
+    text = "🟩" * block + "⬜" * (length - block)
+    percentage = round(progress * 100, 1)
+    return f"[{text}] {percentage}%"
 
 async def broadcast_messages(user_id, message):
     try:
@@ -128,17 +136,83 @@ async def broadcast_messages(user_id, message):
         return await broadcast_messages(user_id, message)
     except InputUserDeactivated:
         await db.delete_user(int(user_id))
-        logging.info(f"{user_id}-Removed from Database, since deleted account.")
         return False, "Deleted"
     except UserIsBlocked:
-        logging.info(f"{user_id} -Blocked the bot.")
         return False, "Blocked"
     except PeerIdInvalid:
         await db.delete_user(int(user_id))
-        logging.info(f"{user_id} - PeerIdInvalid")
         return False, "Error"
-    except Exception as e:
+    except Exception:
         return False, "Error"
+
+async def run_broadcast_in_background(client, message, status_msg):
+    start_time = time.time()
+    success = 0
+    blocked = 0
+    deleted = 0
+    failed = 0
+
+    all_users_cursor = await db.get_all_users()
+    total_users = await db.total_users_count() # ആകെ യൂസർമാരുടെ എണ്ണം
+    
+    if total_users == 0:
+        await status_msg.edit("❌ ഡാറ്റാബേസിൽ യൂസർമാർ ആരും തന്നെയില്ല!")
+        return
+
+    processed = 0
+    async for user in all_users_cursor:
+        user_id = user.get('id')
+        if not user_id:
+            continue
+            
+        is_sent, result = await broadcast_messages(int(user_id), message)
+        
+        if is_sent:
+            success += 1
+        elif result == "Blocked":
+            blocked += 1
+        elif result == "Deleted":
+            deleted += 1
+        else:
+            failed += 1
+            
+        processed += 1
+        
+        # ഓരോ 10 യൂസർമാർ കഴിയുമ്പോഴും ടെലിഗ്രാമിലെ മെസ്സേജ് ലൈവ് ആയി പ്രോഗ്രസ് ബാർ സഹിതം അപ്‌ഡേറ്റ് ചെയ്യും
+        if processed % 10 == 0 or processed == total_users:
+            bar = get_progress_bar(processed, total_users)
+            progress_text = (
+                f"📢 **ബ്രോഡ്കാസ്റ്റിംഗ് പുരോഗമിക്കുന്നു...**\n\n"
+                f"📊 Progress: {bar}\n"
+                f"⏳ അയച്ചത്: {processed} / {total_users}\n\n"
+                f"👍 വിജയിച്ചത്: {success}\n"
+                f"🚫 ബ്ലോക്ക് ചെയ്തവർ: {blocked}\n"
+                f"💀 ഡിലീറ്റ് ആയവർ: {deleted}"
+            )
+            try:
+                await status_msg.edit(progress_text)
+            except Exception:
+                pass
+                
+        await asyncio.sleep(0.5)
+
+    # ബ്രോഡ്കാസ്റ്റ് പൂർണ്ണമായി കഴിഞ്ഞാൽ വരാനുള്ള FINAL TEXT
+    end_time = time.time()
+    time_taken = round(end_time - start_time, 2)
+
+    final_text = (
+        f"✅ **ബ്രോഡ്കാസ്റ്റ് വിജയകരമായി പൂർത്തിയായി!**\n\n"
+        f"⏱️ എടുത്ത സമയം: {time_taken} സെക്കന്റ്\n"
+        f"👥 ആകെ യൂസർമാർ: {total_users}\n\n"
+        f"👍 വിജയിച്ചത്: {success}\n"
+        f"🚫 ബ്ലോക്ക് ചെയ്തവർ: {blocked}\n"
+        f"💀 അക്കൗണ്ട് ഡിലീറ്റ് ആയവർ: {deleted}\n"
+        f"❌ പരാജയപ്പെട്ടത്: {failed}"
+    )
+    try:
+        await status_msg.edit(final_text)
+    except Exception:
+        pass
 
 
 async def get_settings(group_id):
@@ -225,25 +299,6 @@ def extract_user(message: Message) -> Union[int, str]:
     return (user_id, user_first_name)
 
 
-def last_online(from_user):
-    time = ""
-    if from_user.is_bot:
-        time += "🤖 Bot :("
-    elif from_user.status == enums.UserStatus.RECENTLY:
-        time += "Recently"
-    elif from_user.status == enums.UserStatus.LAST_WEEK:
-        time += "Within the last week"
-    elif from_user.status == enums.UserStatus.LAST_MONTH:
-        time += "Within the last month"
-    elif from_user.status == enums.UserStatus.LONG_AGO:
-        time += "A long time ago :("
-    elif from_user.status == enums.UserStatus.ONLINE:
-        time += "Currently Online"
-    elif from_user.status == enums.UserStatus.OFFLINE:
-        time += from_user.last_online_date.strftime("%a, %d %b %Y, %H:%M:%S")
-    return time
-
-
 def split_quotes(text: str) -> List:
     if not any(text.startswith(char) for char in START_CHAR):
         return text.split(None, 1)
@@ -322,61 +377,6 @@ def gfilterparser(text, keyword):
     except:
         return note_data, buttons, None
 
-def parser(text, keyword):
-    if "buttonalert" in text:
-        text = (text.replace("\n", "\\n").replace("\t", "\\t"))
-    buttons = []
-    note_data = ""
-    prev = 0
-    i = 0
-    alerts = []
-    for match in BTN_URL_REGEX.finditer(text):
-        # Check if btnurl is escaped
-        n_escapes = 0
-        to_check = match.start(1) - 1
-        while to_check > 0 and text[to_check] == "\\":
-            n_escapes += 1
-            to_check -= 1
-
-        # if even, not escaped -> create button
-        if n_escapes % 2 == 0:
-            note_data += text[prev:match.start(1)]
-            prev = match.end(1)
-            if match.group(3) == "buttonalert":
-                # create a thruple with button label, url, and newline status
-                if bool(match.group(5)) and buttons:
-                    buttons[-1].append(InlineKeyboardButton(
-                        text=match.group(2),
-                        callback_data=f"alertmessage:{i}:{keyword}"
-                    ))
-                else:
-                    buttons.append([InlineKeyboardButton(
-                        text=match.group(2),
-                        callback_data=f"alertmessage:{i}:{keyword}"
-                    )])
-                i += 1
-                alerts.append(match.group(4))
-            elif bool(match.group(5)) and buttons:
-                buttons[-1].append(InlineKeyboardButton(
-                    text=match.group(2),
-                    url=match.group(4).replace(" ", "")
-                ))
-            else:
-                buttons.append([InlineKeyboardButton(
-                    text=match.group(2),
-                    url=match.group(4).replace(" ", "")
-                )])
-
-        else:
-            note_data += text[prev:to_check]
-            prev = match.start(1) - 1
-    else:
-        note_data += text[prev:]
-
-    try:
-        return note_data, buttons, alerts
-    except:
-        return note_data, buttons, None
 
 def remove_escapes(text: str) -> str:
     res = ""
